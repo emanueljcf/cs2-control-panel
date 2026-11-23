@@ -2,19 +2,6 @@
   "gameType": 0,
   "gameMode": 0,
   "label": "Casual",
-  "overrides": {
-    "bot_quota": 0,
-    "mp_autokick": 0,
-    "mp_warmup_pausetimer": 0,
-    "mp_warmuptime": 999999,
-    "mp_endwarmup_player_count": 2,
-    "mp_warmuptime_all_players_connected": 6,
-    "mp_maxrounds": 29,
-    "mp_match_can_clinch": 1,
-    "mp_timelimit": 0,
-    "mp_match_restart_delay": 15,
-    "mp_endmatch_votenextmap": 0,
-    "mp_roundtime_defuse": 2.5
-  },
+  "overrides": {},
   "rawOverrides": {}
 }

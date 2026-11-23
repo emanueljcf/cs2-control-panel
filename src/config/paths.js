@@ -2,8 +2,11 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '..', envFile()) });
 
 function envFile() {
-  const env = process.env.NODE_ENV || 'development';
-  return env === 'production' ? '.env.production' : '.env.development';
+  return currentEnv() === 'production' ? '.env.production' : '.env.development';
+}
+
+function currentEnv() {
+  return process.env.NODE_ENV || 'development';
 }
 
 const PROJECT_ROOT = path.join(__dirname, '..', '..');
@@ -26,8 +29,13 @@ module.exports = {
   CS2_MAPCYCLE_FILE: path.join(CS2_ROOT, 'game', 'csgo', 'mapcycle.txt'),
   TEMPLATES_DIR: path.join(PROJECT_ROOT, 'config', 'templates'),
   GAMEMODES_DIR: path.join(PROJECT_ROOT, 'config', 'gamemodes'),
-  SERVER_JSON: path.join(PROJECT_ROOT, 'config', 'server.json'),
+  PRESETS_JSON: path.join(PROJECT_ROOT, 'config', 'presets.json'),
+  // Por ambiente: cada deployment (teste vs producao) tem o seu proprio
+  // estado operacional (porta, mapa/modo ativo, pid). As regras de jogo em
+  // GAMEMODES_DIR ficam partilhadas de propósito, para o que é validado em
+  // teste ser exatamente o que se promove para producao.
+  SERVER_JSON: path.join(PROJECT_ROOT, 'config', `server.${currentEnv()}.json`),
   AUTH_JSON: path.join(PROJECT_ROOT, 'config', 'auth.json'),
-  RUNTIME_JSON: path.join(PROJECT_ROOT, 'state', 'runtime.json'),
+  RUNTIME_JSON: path.join(PROJECT_ROOT, 'state', `runtime.${currentEnv()}.json`),
   BACKUPS_DIR: path.join(PROJECT_ROOT, 'backups', 'cfg-snapshots'),
 };

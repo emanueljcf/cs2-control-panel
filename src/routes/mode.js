@@ -25,16 +25,19 @@ router.post('/change', async (req, res) => {
     try {
       await rcon.changeMode(gameType, gameMode, server.activeMap);
       server.activeMode = mode;
+      server.activePresetId = null;
       settingsStore.setServer(server);
       return res.json({ applied: true, live: true });
     } catch (err) {
       server.activeMode = mode;
+      server.activePresetId = null;
       settingsStore.setServer(server);
       return res.json({ applied: false, pendingRestart: true, warning: `Troca ao vivo falhou (${err.message}) — fica pendente para o próximo restart.` });
     }
   }
 
   server.activeMode = mode;
+  server.activePresetId = null;
   settingsStore.setServer(server);
   res.json({ applied: false, pendingRestart: true, warning: 'Servidor parado ou RCON não configurado — a troca de modo só acontece no próximo arranque.' });
 });

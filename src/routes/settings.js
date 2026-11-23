@@ -11,7 +11,16 @@ router.get('/modes/:mode', (req, res) => {
   const { mode } = req.params;
   if (!registry.MODES.includes(mode)) return res.status(404).json({ error: 'modo-desconhecido' });
   const modeData = settingsStore.getMode(mode);
-  res.json({ fields: registry.forMode(mode), values: { ...modeData.overrides }, raw: modeData.rawOverrides });
+  const server = settingsStore.getServer();
+  const activePresetId = server.activeMode === mode ? server.activePresetId : null;
+  const isCustom = !settingsStore.matchesPreset(mode, server.activeMode === mode ? activePresetId : null);
+  res.json({
+    fields: registry.forMode(mode),
+    values: { ...modeData.overrides },
+    raw: modeData.rawOverrides,
+    activePresetId,
+    isCustom,
+  });
 });
 
 // PUT /api/settings/modes/:mode  body: { changes: {convar: valor, ...} }

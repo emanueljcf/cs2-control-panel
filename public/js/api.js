@@ -49,4 +49,9 @@ const api = {
   applyAll: (dryRun = false) => apiFetch(`/api/settings/apply?dryRun=${dryRun}`, { method: 'POST' }),
 
   getConvars: () => apiFetch('/api/convars'),
+
+  getPresets: () => apiFetch('/api/presets'),
+  savePreset: (name, baseMode) => apiFetch('/api/presets', { method: 'POST', body: JSON.stringify({ name, baseMode }) }),
+  applyPreset: (id) => apiFetch(`/api/presets/${id}/apply`, { method: 'POST' }),
+  deletePreset: (id) => apiFetch(`/api/presets/${id}`, { method: 'DELETE' }),
 };

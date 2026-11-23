@@ -15,6 +15,7 @@ async function initDashboard() {
   await loadModes();
   await loadServerSettings();
   await loadModeSettings(document.getElementById('settings-mode-select').value);
+  await loadPresets();
 
   document.getElementById('btn-start').addEventListener('click', async () => {
     await api.serverStart();
@@ -61,6 +62,7 @@ async function initDashboard() {
   document.getElementById('btn-save-server-settings').addEventListener('click', saveServerSettings);
   document.getElementById('settings-mode-select').addEventListener('change', (e) => loadModeSettings(e.target.value));
   document.getElementById('btn-save-mode-settings').addEventListener('click', saveModeSettings);
+  document.getElementById('btn-save-as-preset').addEventListener('click', saveAsPreset);
   document.getElementById('btn-save-raw').addEventListener('click', saveRawOverrides);
   document.getElementById('btn-apply-all').addEventListener('click', async () => {
     await api.applyAll(false);
@@ -199,10 +201,77 @@ async function saveServerSettings() {
 
 async function loadModeSettings(mode) {
   if (!mode) return;
-  const { fields, values } = await api.getModeSettings(mode);
+  const { fields, values, isCustom, activePresetId } = await api.getModeSettings(mode);
   const form = document.getElementById('mode-settings-form');
   form.innerHTML = fields.filter((f) => !f.modes.includes('*')).map((f) => renderField(f, values[f.key])).join('');
   form.dataset.mode = mode;
+  form.dataset.dirty = 'false';
+  form.querySelectorAll('input,select').forEach((el) => el.addEventListener('input', () => markModeDirty()));
+
+  const badge = document.getElementById('mode-status-badge');
+  if (isCustom) {
+    badge.textContent = 'Custom (modificado)';
+    badge.className = 'badge unmanaged';
+  } else if (activePresetId) {
+    const preset = (await api.getPresets()).presets.find((p) => p.id === activePresetId);
+    badge.textContent = preset ? `Preset: ${preset.name}` : 'Preset';
+    badge.className = 'badge running';
+  } else {
+    badge.textContent = 'Standard (Valve)';
+    badge.className = 'badge running';
+  }
+}
+
+function markModeDirty() {
+  document.getElementById('mode-settings-form').dataset.dirty = 'true';
+  const badge = document.getElementById('mode-status-badge');
+  badge.textContent = 'Custom (não guardado)';
+  badge.className = 'badge unmanaged';
+}
+
+async function saveAsPreset() {
+  const form = document.getElementById('mode-settings-form');
+  const mode = form.dataset.mode;
+  const name = prompt('Nome para este preset (ex: "Torneio sexta-feira"):');
+  if (!name) return;
+  await saveModeSettings(); // garante que o que está no formulário foi gravado primeiro
+  await api.savePreset(name, mode);
+  await loadPresets();
+  await loadModeSettings(mode);
+  alert(`Preset "${name}" guardado.`);
+}
+
+async function loadPresets() {
+  const { presets } = await api.getPresets();
+  const list = document.getElementById('presets-list');
+  if (!presets.length) {
+    list.innerHTML = '<p class="hint">Ainda não guardaste nenhum preset.</p>';
+    return;
+  }
+  list.innerHTML = presets.map((p) => `
+    <div class="live-row" data-id="${p.id}">
+      <span>${p.name} <span class="hint">(${settingsModeLabel(p.baseMode)})</span></span>
+      <button type="button" class="live preset-apply">Aplicar</button>
+      <button type="button" class="danger preset-delete">Apagar</button>
+    </div>
+  `).join('');
+  list.querySelectorAll('.preset-apply').forEach((btn) => btn.addEventListener('click', async (e) => {
+    const id = e.target.closest('[data-id]').dataset.id;
+    const result = await api.applyPreset(id);
+    showLiveFeedback(result);
+    refreshStatus();
+    loadModeSettings(document.getElementById('settings-mode-select').value);
+  }));
+  list.querySelectorAll('.preset-delete').forEach((btn) => btn.addEventListener('click', async (e) => {
+    const id = e.target.closest('[data-id]').dataset.id;
+    if (!confirm('Apagar este preset?')) return;
+    await api.deletePreset(id);
+    loadPresets();
+  }));
+}
+
+function settingsModeLabel(mode) {
+  return { competitive: 'Competitivo', casual: 'Casual', deathmatch: 'Deathmatch', custom: 'Custom' }[mode] || mode;
 }
 
 async function saveModeSettings() {

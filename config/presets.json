@@ -1,0 +1,13 @@
+[
+  {
+    "id": "competitive-1795475357516",
+    "name": "Primeiro a 15",
+    "baseMode": "competitive",
+    "overrides": {
+      "sv_vote_issue_pause_match_spec_only": 0,
+      "mp_maxrounds": 29
+    },
+    "rawOverrides": {},
+    "createdAt": "2026-11-23T23:09:17.516Z"
+  }
+]

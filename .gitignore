@@ -5,5 +5,5 @@ node_modules/
 state/
 backups/
 config/auth.json
-config/server.json
+config/server.*.json
 *.log

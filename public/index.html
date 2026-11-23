@@ -73,10 +73,20 @@
     <div class="live-row">
       <label>Editar modo:</label>
       <select id="settings-mode-select"></select>
+      <span id="mode-status-badge" class="badge"></span>
     </div>
     <div id="mode-settings-form" class="settings-grid"></div>
-    <button id="btn-save-mode-settings" class="secondary">Guardar</button>
+    <div class="actions">
+      <button id="btn-save-mode-settings" class="secondary">Guardar (neste modo)</button>
+      <button id="btn-save-as-preset" class="live">Guardar como preset com nome...</button>
+    </div>
     <p id="mode-settings-feedback" class="hint"></p>
+  </section>
+
+  <section class="card">
+    <h2>Presets guardados</h2>
+    <p class="hint">Seleciona um modo acima (Competitivo/Casual/Deathmatch/Custom) para carregar as regras standard; assim que alteras algo, o estado passa a "Custom" e podes guardar como preset aqui para reutilizar no futuro.</p>
+    <div id="presets-list"></div>
   </section>
 
   <section class="card">

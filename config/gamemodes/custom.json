@@ -3,8 +3,7 @@
   "gameMode": 0,
   "label": "Custom",
   "overrides": {
-    "bot_quota": 0,
-    "mp_autokick": 0
+    "sv_vote_issue_pause_match_spec_only": 0
   },
   "rawOverrides": {}
 }

@@ -24,6 +24,7 @@ app.use('/api/mode', requireAuth, require('./routes/mode'));
 app.use('/api/match', requireAuth, require('./routes/match'));
 app.use('/api/settings', requireAuth, require('./routes/settings'));
 app.use('/api/convars', requireAuth, require('./routes/convars'));
+app.use('/api/presets', requireAuth, require('./routes/presets'));
 
 app.listen(paths.PANEL_PORT, '127.0.0.1', () => {
   console.log(`CS2 Control Panel a correr em http://127.0.0.1:${paths.PANEL_PORT}`);

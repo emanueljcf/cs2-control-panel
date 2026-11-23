@@ -40,6 +40,20 @@ const CONVARS = [
   { key: 'mp_startmoney', label: 'Dinheiro inicial', category: 'Economia', type: 'int', min: 0, max: 65000, step: 100, default: 800, modes: MODES, liveApplicable: true },
   { key: 'mp_maxmoney', label: 'Dinheiro máximo', category: 'Economia', type: 'int', min: 0, max: 65000, step: 500, default: 16000, modes: MODES, liveApplicable: true },
 
+  // --- Pausas ---
+  // Confirmado nesta sessao via "find timeout"/"find pause" no servidor real
+  // (nao via documentacao de terceiros): sv_vote_issue_timeout_allowed e
+  // sv_vote_issue_pause_match_allowed NAO EXISTEM nesta versao do CS2 - sao
+  // strings residuais no binario, mas nao convars registados. O mecanismo
+  // real e: jogadores chamam "timeout_ct_start"/"timeout_terrorist_start"
+  // (comando direto, sem votacao) para pedir pausa tactica, e
+  // "mp_pause_match" para pausa tecnica - ambos ja funcionam sem qualquer
+  // destes convars, desde que sv_vote_issue_pause_match_spec_only esteja a 0.
+  { key: 'sv_vote_issue_pause_match_spec_only', label: 'Só admins/espetadores podem pausar (desliga para permitir aos jogadores)', category: 'Pausas', type: 'bool', default: false, modes: ['competitive', 'custom'], liveApplicable: true },
+  { key: 'mp_team_timeout_time', label: 'Duração de cada pausa táctica (seg)', category: 'Pausas', type: 'int', min: 10, max: 180, step: 5, default: 60, modes: ['competitive', 'custom'], liveApplicable: true },
+  { key: 'mp_team_timeout_max', label: 'Nº de pausas tácticas por equipa, por partida', category: 'Pausas', type: 'int', min: 0, max: 10, step: 1, default: 1, modes: ['competitive', 'custom'], liveApplicable: true },
+  { key: 'sv_matchpause_auto_5v5', label: 'Pausar automaticamente se uma equipa ficar incompleta (<5)', category: 'Pausas', type: 'bool', default: false, modes: ['competitive', 'custom'], liveApplicable: true },
+
   // --- Jogadores / bots ---
   { key: 'bot_quota', label: 'Nº de bots', category: 'Jogadores', type: 'int', min: 0, max: 32, step: 1, default: 0, modes: MODES, liveApplicable: true },
   { key: 'mp_autokick', label: 'Kick automático por idle/team-damage', category: 'Jogadores', type: 'bool', default: false, modes: MODES, liveApplicable: true },
