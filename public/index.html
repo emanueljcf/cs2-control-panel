@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CS2 Control Panel</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div id="login-view" class="view">
+  <form id="login-form" class="login-box">
+    <h1>CS2 Control Panel</h1>
+    <p id="login-hint" class="hint"></p>
+    <input type="password" id="login-password" placeholder="Password" required minlength="8" autofocus />
+    <button type="submit">Entrar</button>
+    <p id="login-error" class="error"></p>
+  </form>
+</div>
+
+<div id="dashboard-view" class="view hidden">
+  <header>
+    <h1>CS2 Control Panel</h1>
+    <button id="logout-btn" class="secondary">Sair</button>
+  </header>
+
+  <section id="status-card" class="card">
+    <h2>Estado do servidor</h2>
+    <div id="status-body">A carregar...</div>
+    <div class="actions">
+      <button id="btn-start" class="primary">Arrancar</button>
+      <button id="btn-stop" class="danger">Parar servidor</button>
+      <button id="btn-restart" class="danger">Reiniciar servidor (processo)</button>
+      <button id="btn-adopt" class="secondary hidden">Adotar processo existente</button>
+    </div>
+    <p id="rcon-warning" class="warning hidden"></p>
+  </section>
+
+  <section class="card">
+    <h2>Ações ao vivo (sem desligar ninguém)</h2>
+    <div class="live-row">
+      <label>Mapa</label>
+      <select id="live-map-select"></select>
+      <button id="btn-change-map" class="live">Trocar mapa (ao vivo)</button>
+    </div>
+    <div class="live-row">
+      <button id="btn-restart-match" class="live">Reiniciar partida / zerar placar</button>
+      <button id="btn-restart-round" class="live">Reiniciar só a ronda atual</button>
+    </div>
+    <div class="live-row">
+      <label>Modo</label>
+      <select id="mode-select"></select>
+      <button id="btn-change-mode" class="live">Trocar modo</button>
+    </div>
+    <p id="live-feedback" class="hint"></p>
+  </section>
+
+  <section class="card">
+    <h2>Rotação de mapas (mapcycle)</h2>
+    <div id="mapcycle-editor"></div>
+    <button id="btn-save-mapcycle" class="secondary">Guardar rotação</button>
+  </section>
+
+  <section class="card">
+    <h2>Definições do servidor</h2>
+    <div id="server-settings-form" class="settings-grid"></div>
+    <button id="btn-save-server-settings" class="secondary">Guardar</button>
+    <p id="server-settings-feedback" class="hint"></p>
+  </section>
+
+  <section class="card">
+    <h2>Definições por modo</h2>
+    <div class="live-row">
+      <label>Editar modo:</label>
+      <select id="settings-mode-select"></select>
+    </div>
+    <div id="mode-settings-form" class="settings-grid"></div>
+    <button id="btn-save-mode-settings" class="secondary">Guardar</button>
+    <p id="mode-settings-feedback" class="hint"></p>
+  </section>
+
+  <section class="card">
+    <h2>Avançado</h2>
+    <p class="hint">Qualquer convar que ainda não tenha campo próprio acima. Aplica-se só ao gerar os ficheiros (não ao vivo).</p>
+    <textarea id="raw-overrides" rows="6" placeholder="mp_exemplo 1&#10;outro_convar valor"></textarea>
+    <button id="btn-save-raw">Guardar avançado</button>
+    <button id="btn-apply-all" class="secondary">Reaplicar todas as configurações aos ficheiros .cfg</button>
+  </section>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/login.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

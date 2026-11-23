@@ -1,0 +1,9 @@
+node_modules/
+.env
+.env.*
+!.env.example
+state/
+backups/
+config/auth.json
+config/server.json
+*.log
