@@ -34,6 +34,27 @@ header {
 h1 { font-size: 20px; margin: 0; }
 h2 { font-size: 16px; margin: 0 0 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
 
+.tabs {
+  max-width: 900px;
+  margin: 0 auto 16px;
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.tab-btn {
+  background: none;
+  color: var(--muted);
+  padding: 10px 16px;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+}
+.tab-btn.active { color: var(--text); border-bottom-color: var(--accent); }
+
+.players-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.players-table th { text-align: left; color: var(--muted); font-size: 12px; text-transform: uppercase; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+.players-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); }
+.players-table button { margin-right: 6px; padding: 4px 10px; font-size: 12px; }
+
 .card {
   background: var(--card);
   border: 1px solid var(--border);

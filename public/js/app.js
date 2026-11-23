@@ -76,6 +76,12 @@ async function initDashboard() {
   refreshPauseState();
   setInterval(refreshPauseState, 5000);
 
+  document.querySelectorAll('.tab-btn').forEach((btn) => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+  setInterval(() => {
+    if (document.getElementById('tab-jogadores').classList.contains('hidden')) return;
+    loadPlayers();
+  }, 5000);
+
   document.getElementById('btn-save-mapcycle').addEventListener('click', saveMapcycle);
   document.getElementById('btn-save-server-settings').addEventListener('click', saveServerSettings);
   document.getElementById('settings-mode-select').addEventListener('change', (e) => loadModeSettings(e.target.value));
@@ -132,6 +138,57 @@ async function refreshStatus() {
     rconWarning.classList.remove('hidden');
   } else {
     rconWarning.classList.add('hidden');
+  }
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
+  document.getElementById('tab-painel').classList.toggle('hidden', tab !== 'painel');
+  document.getElementById('tab-jogadores').classList.toggle('hidden', tab !== 'jogadores');
+  if (tab === 'jogadores') loadPlayers();
+}
+
+async function loadPlayers() {
+  const warning = document.getElementById('players-warning');
+  const tbody = document.getElementById('players-tbody');
+  try {
+    const { players } = await api.getPlayers();
+    warning.classList.add('hidden');
+    if (!players.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="hint">Ninguém ligado.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = players.map((p) => `
+      <tr data-userid="${p.userid}">
+        <td>${p.userid}</td>
+        <td>${p.name}${p.isBot ? ' <span class="hint">(bot)</span>' : ''}</td>
+        <td>${p.time ?? '-'}</td>
+        <td>${p.ping}</td>
+        <td>${p.loss}</td>
+        <td>${p.address ?? '-'}</td>
+        <td>
+          <button type="button" class="secondary btn-kick">Kick</button>
+          <button type="button" class="danger btn-ban">Banir</button>
+        </td>
+      </tr>
+    `).join('');
+    tbody.querySelectorAll('.btn-kick').forEach((btn) => btn.addEventListener('click', async (e) => {
+      const userid = e.target.closest('tr').dataset.userid;
+      if (!confirm(`Kickar o jogador #${userid}?`)) return;
+      await api.kickPlayer(userid, 'Removido pelo administrador');
+      loadPlayers();
+    }));
+    tbody.querySelectorAll('.btn-ban').forEach((btn) => btn.addEventListener('click', async (e) => {
+      const userid = e.target.closest('tr').dataset.userid;
+      const minutesStr = prompt('Duração do banimento em minutos (0 = permanente):', '60');
+      if (minutesStr === null) return;
+      await api.banPlayer(userid, Number(minutesStr) || 0, 'Banido pelo administrador');
+      loadPlayers();
+    }));
+  } catch (err) {
+    warning.textContent = err.message || 'RCON indisponível — ativa-o e reinicia uma vez para ver os jogadores ligados.';
+    warning.classList.remove('hidden');
+    tbody.innerHTML = '';
   }
 }
 

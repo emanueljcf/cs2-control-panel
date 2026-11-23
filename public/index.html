@@ -24,6 +24,13 @@
     <button id="logout-btn" class="secondary">Sair</button>
   </header>
 
+  <nav class="tabs">
+    <button type="button" class="tab-btn active" data-tab="painel">Painel</button>
+    <button type="button" class="tab-btn" data-tab="jogadores">Jogadores</button>
+  </nav>
+
+  <div id="tab-painel" class="tab-content">
+
   <section id="status-card" class="card">
     <h2>Estado do servidor</h2>
     <div id="status-body">A carregar...</div>
@@ -108,6 +115,24 @@
     <button id="btn-save-raw">Guardar avançado</button>
     <button id="btn-apply-all" class="secondary">Reaplicar todas as configurações aos ficheiros .cfg</button>
   </section>
+
+  </div>
+
+  <div id="tab-jogadores" class="tab-content hidden">
+    <section class="card">
+      <h2>Jogadores ligados</h2>
+      <p id="players-warning" class="warning hidden"></p>
+      <table id="players-table" class="players-table">
+        <thead>
+          <tr>
+            <th>ID</th><th>Nome</th><th>Tempo</th><th>Ping</th><th>Perda</th><th>Endereço</th><th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="players-tbody"></tbody>
+      </table>
+      <p class="hint">Atualiza automaticamente a cada 5 segundos. Banir usa a identidade local da sessão (limitação do modo LAN sem Steam real) — persiste em disco, mas se a mesma pessoa reconectar com um id diferente, pode não ser reconhecida.</p>
+    </section>
+  </div>
 </div>
 
 <script src="js/api.js"></script>

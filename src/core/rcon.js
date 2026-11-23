@@ -69,6 +69,56 @@ async function status() {
   return command('status');
 }
 
+// Linha de um jogador real, ex:
+//    2  01:23   45    0     active  12000 192.168.1.5:27005 'Nome do jogador'
+// Linha de um bot, ex:
+//    0      BOT    0    0     active      0 'Cavalry'
+const PLAYER_LINE = /^\s*(\d+)\s+(BOT|[\d:]+)\s+(-?\d+)\s+(-?\d+)\s+(\S+)\s+(\d+)\s+(?:(\S+:\d+)\s+)?'(.*)'\s*$/;
+
+function parsePlayers(statusText) {
+  const players = [];
+  for (const line of statusText.split('\n')) {
+    const m = line.match(PLAYER_LINE);
+    if (!m) continue;
+    const [, userid, time, ping, loss, state, rate, address, name] = m;
+    if (!name || state !== 'active') continue; // ignora ligações a meio do handshake (sem nome)
+    players.push({
+      userid,
+      isBot: time === 'BOT',
+      time: time === 'BOT' ? null : time,
+      ping: Number(ping),
+      loss: Number(loss),
+      state,
+      rate: Number(rate),
+      address: address || null,
+      name,
+    });
+  }
+  return players;
+}
+
+// Ao vivo: lista de jogadores ligados agora (via "status"), incluindo bots.
+async function getPlayers() {
+  const text = await status();
+  return parsePlayers(text);
+}
+
+// Ao vivo: kick imediato, sem banir. "reason" aparece ao jogador.
+async function kickPlayer(userid, reason = 'Removido pelo administrador') {
+  return command(`kickid ${userid} ${reason}`);
+}
+
+// Ao vivo: bane por N minutos (0 = permanente) e kicka de imediato; "writeid"
+// persiste a lista de banidos em disco (banned_user.cfg) para sobreviver a
+// um restart. Nota: em sv_lan 1, sem Steam real, a identidade do banido é o
+// "uniqueid" local da sessão — pode não sobreviver a uma nova ligação da
+// mesma pessoa se o motor atribuir um id diferente. É a limitação nativa do
+// modo LAN, não desta app.
+async function banPlayer(userid, minutes = 0, reason = 'Banido pelo administrador') {
+  await command(`banid ${minutes} ${userid} kick`);
+  return command('writeid');
+}
+
 module.exports = {
   isConfigured,
   command,
@@ -81,5 +131,9 @@ module.exports = {
   unpauseMatch,
   quit,
   status,
+  getPlayers,
+  kickPlayer,
+  banPlayer,
+  parsePlayers,
   RconUnavailableError,
 };

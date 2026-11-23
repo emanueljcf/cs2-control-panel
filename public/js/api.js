@@ -53,6 +53,10 @@ const api = {
 
   getConvars: () => apiFetch('/api/convars'),
 
+  getPlayers: () => apiFetch('/api/players'),
+  kickPlayer: (userid, reason) => apiFetch(`/api/players/${userid}/kick`, { method: 'POST', body: JSON.stringify({ reason }) }),
+  banPlayer: (userid, minutes, reason) => apiFetch(`/api/players/${userid}/ban`, { method: 'POST', body: JSON.stringify({ minutes, reason }) }),
+
   getPresets: () => apiFetch('/api/presets'),
   savePreset: (name, baseMode) => apiFetch('/api/presets', { method: 'POST', body: JSON.stringify({ name, baseMode }) }),
   applyPreset: (id) => apiFetch(`/api/presets/${id}/apply`, { method: 'POST' }),
