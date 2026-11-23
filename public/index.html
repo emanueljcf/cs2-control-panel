@@ -13,13 +13,13 @@
     <h1>CS2 Control Panel</h1>
     <p id="login-hint" class="hint"></p>
     <input type="password" id="login-password" placeholder="Password" required minlength="8" autofocus />
-    <button type="submit">Entrar</button>
+    <button type="submit" class="primary">Entrar</button>
     <p id="login-error" class="error"></p>
   </form>
 </div>
 
 <div id="dashboard-view" class="view hidden">
-  <header>
+  <header class="page">
     <h1>CS2 Control Panel</h1>
     <button id="logout-btn" class="secondary">Sair</button>
   </header>
@@ -29,122 +29,143 @@
     <button type="button" class="tab-btn" data-tab="jogadores">Jogadores</button>
   </nav>
 
+  <div class="page-grid">
   <div id="tab-painel" class="tab-content">
 
-  <section id="status-card" class="card">
-    <h2>Estado do servidor</h2>
-    <div id="status-body">A carregar...</div>
-    <div class="actions">
-      <button id="btn-start" class="primary">Arrancar</button>
-      <button id="btn-stop" class="danger">Parar servidor</button>
-      <button id="btn-restart" class="danger">Reiniciar servidor (processo)</button>
-      <button id="btn-adopt" class="secondary hidden">Adotar processo existente</button>
+    <div class="row">
+      <section id="status-card" class="card accent-left">
+        <h2>Estado do servidor</h2>
+        <div id="status-body" class="stat-grid"></div>
+        <div class="actions">
+          <button id="btn-start" class="primary">Arrancar</button>
+          <button id="btn-stop" class="danger">Parar servidor</button>
+          <button id="btn-restart" class="danger">Reiniciar servidor (processo)</button>
+          <button id="btn-adopt" class="secondary hidden">Adotar processo existente</button>
+        </div>
+        <p id="rcon-warning" class="warning hidden"></p>
+      </section>
     </div>
-    <p id="rcon-warning" class="warning hidden"></p>
-  </section>
 
-  <section class="card">
-    <h2>Ações ao vivo (sem desligar ninguém)</h2>
-    <div class="live-row">
-      <label>Mapa</label>
-      <select id="live-map-select"></select>
-      <button id="btn-change-map" class="live">Trocar mapa (ao vivo)</button>
+    <div class="row">
+      <section class="card">
+        <h2>Ações ao vivo (sem desligar ninguém)</h2>
+        <div class="live-row">
+          <label>Mapa</label>
+          <select id="live-map-select"></select>
+          <button id="btn-change-map" class="live">Trocar mapa</button>
+        </div>
+        <div class="live-row">
+          <button id="btn-restart-match" class="live">Reiniciar partida / zerar placar</button>
+          <button id="btn-restart-round" class="live">Reiniciar só a ronda atual</button>
+        </div>
+        <div class="live-row">
+          <label>Modo</label>
+          <select id="mode-select"></select>
+          <button id="btn-change-mode" class="live">Trocar modo</button>
+        </div>
+        <hr class="divider" />
+        <div class="live-row">
+          <label>Pausar</label>
+          <select id="pause-type-select">
+            <option value="fixed">Tempo fixo</option>
+            <option value="indefinite">Indeterminada</option>
+          </select>
+          <input type="number" id="pause-duration-input" min="5" step="5" value="60" style="width:80px" />
+          <span class="hint">segundos</span>
+          <button id="btn-pause" class="live">Pausar</button>
+          <button id="btn-unpause" class="secondary">Despausar</button>
+        </div>
+        <p id="pause-status" class="hint"></p>
+        <p id="live-feedback" class="hint"></p>
+      </section>
     </div>
-    <div class="live-row">
-      <button id="btn-restart-match" class="live">Reiniciar partida / zerar placar</button>
-      <button id="btn-restart-round" class="live">Reiniciar só a ronda atual</button>
-    </div>
-    <div class="live-row">
-      <label>Modo</label>
-      <select id="mode-select"></select>
-      <button id="btn-change-mode" class="live">Trocar modo</button>
-    </div>
-    <div class="live-row">
-      <label>Pausar</label>
-      <select id="pause-type-select">
-        <option value="fixed">Tempo fixo</option>
-        <option value="indefinite">Indeterminada</option>
-      </select>
-      <input type="number" id="pause-duration-input" min="5" step="5" value="60" style="width:80px" />
-      <span class="hint">segundos (ignorado se "Indeterminada")</span>
-      <button id="btn-pause" class="live">Pausar</button>
-      <button id="btn-unpause" class="secondary">Despausar</button>
-    </div>
-    <p id="pause-status" class="hint"></p>
-    <p id="live-feedback" class="hint"></p>
-  </section>
 
-  <section class="card">
-    <h2>Rotação de mapas (mapcycle)</h2>
-    <div id="mapcycle-editor"></div>
-    <button id="btn-save-mapcycle" class="secondary">Guardar rotação</button>
-  </section>
+    <div class="row cols-2">
+      <section class="card">
+        <h2>Rotação de mapas</h2>
+        <div id="mapcycle-editor"></div>
+        <button id="btn-save-mapcycle" class="secondary">Guardar rotação</button>
+      </section>
 
-  <section class="card">
-    <h2>Definições do servidor</h2>
-    <div id="server-settings-form" class="settings-grid"></div>
-    <button id="btn-save-server-settings" class="secondary">Guardar</button>
-    <p id="server-settings-feedback" class="hint"></p>
-  </section>
-
-  <section class="card">
-    <h2>Definições por modo</h2>
-    <div class="live-row">
-      <label>Editar modo:</label>
-      <select id="settings-mode-select"></select>
-      <span id="mode-status-badge" class="badge"></span>
+      <section class="card">
+        <h2>Definições do servidor</h2>
+        <div id="server-settings-form" class="settings-grid"></div>
+        <button id="btn-save-server-settings" class="secondary">Guardar</button>
+        <p id="server-settings-feedback" class="hint"></p>
+      </section>
     </div>
-    <div id="mode-settings-form" class="settings-grid"></div>
-    <div class="actions">
-      <button id="btn-save-mode-settings" class="secondary">Guardar (neste modo)</button>
-      <button id="btn-save-as-preset" class="live">Guardar como preset com nome...</button>
+
+    <div class="row">
+      <section class="card">
+        <h2>Definições por modo</h2>
+        <div class="live-row">
+          <label>Editar modo:</label>
+          <select id="settings-mode-select"></select>
+          <span id="mode-status-badge" class="badge"></span>
+        </div>
+        <div id="mode-settings-form" class="settings-grid"></div>
+        <div class="actions">
+          <button id="btn-save-mode-settings" class="secondary">Guardar (neste modo)</button>
+          <button id="btn-save-as-preset" class="live">Guardar como preset com nome...</button>
+        </div>
+        <p id="mode-settings-feedback" class="hint"></p>
+      </section>
     </div>
-    <p id="mode-settings-feedback" class="hint"></p>
-  </section>
 
-  <section class="card">
-    <h2>Presets guardados</h2>
-    <p class="hint">Seleciona um modo acima (Competitivo/Casual/Deathmatch/Custom) para carregar as regras standard; assim que alteras algo, o estado passa a "Custom" e podes guardar como preset aqui para reutilizar no futuro.</p>
-    <div id="presets-list"></div>
-  </section>
+    <div class="row">
+      <section class="card">
+        <h2>Presets guardados</h2>
+        <p class="hint">Seleciona um modo acima para carregar as regras standard; assim que alteras algo, o estado passa a "Custom" e podes guardar como preset aqui para reutilizar no futuro.</p>
+        <div id="presets-list"></div>
+      </section>
+    </div>
 
-  <section class="card">
-    <h2>Avançado</h2>
-    <p class="hint">Qualquer convar que ainda não tenha campo próprio acima. Aplica-se só ao gerar os ficheiros (não ao vivo).</p>
-    <textarea id="raw-overrides" rows="6" placeholder="mp_exemplo 1&#10;outro_convar valor"></textarea>
-    <button id="btn-save-raw">Guardar avançado</button>
-    <button id="btn-apply-all" class="secondary">Reaplicar todas as configurações aos ficheiros .cfg</button>
-  </section>
+    <div class="row">
+      <section class="card muted-card">
+        <h2>Avançado</h2>
+        <p class="hint">Qualquer convar que ainda não tenha campo próprio acima. Aplica-se só ao gerar os ficheiros (não ao vivo).</p>
+        <textarea id="raw-overrides" rows="5" placeholder="mp_exemplo 1&#10;outro_convar valor"></textarea>
+        <div class="actions">
+          <button id="btn-save-raw" class="secondary">Guardar avançado</button>
+          <button id="btn-apply-all" class="secondary">Reaplicar todas as configurações aos ficheiros .cfg</button>
+        </div>
+      </section>
+    </div>
 
   </div>
 
   <div id="tab-jogadores" class="tab-content hidden">
-    <section class="card">
-      <h2>Jogadores ligados</h2>
-      <p id="players-warning" class="warning hidden"></p>
-      <table id="players-table" class="players-table">
-        <thead>
-          <tr>
-            <th>ID</th><th>Nome</th><th>Tempo</th><th>Ping</th><th>Perda</th><th>Endereço</th><th>Ações</th>
-          </tr>
-        </thead>
-        <tbody id="players-tbody"></tbody>
-      </table>
-      <p class="hint">Atualiza automaticamente a cada 5 segundos. Banir usa a identidade local da sessão (limitação do modo LAN sem Steam real) — persiste em disco, mas se a mesma pessoa reconectar com um id diferente, pode não ser reconhecida.</p>
-    </section>
+    <div class="row">
+      <section class="card">
+        <h2>Jogadores ligados</h2>
+        <p id="players-warning" class="warning hidden"></p>
+        <table id="players-table" class="players-table">
+          <thead>
+            <tr>
+              <th>ID</th><th>Nome</th><th>Tempo</th><th>Ping</th><th>Perda</th><th>Endereço</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="players-tbody"></tbody>
+        </table>
+        <p class="hint">Atualiza automaticamente a cada 5 segundos. Banir usa a identidade local da sessão (limitação do modo LAN sem Steam real) — persiste em disco, mas se a mesma pessoa reconectar com um id diferente, pode não ser reconhecida.</p>
+      </section>
+    </div>
 
-    <section class="card">
-      <h2>Histórico de banimentos</h2>
-      <p class="hint">Lista do que foi banido a partir deste painel. "Desbanir" tenta remover esse id específico — só funciona se corresponder exatamente ao que o motor guardou. Se não tiveres a certeza de qual é, usa a rede de segurança abaixo.</p>
-      <table id="bans-table" class="players-table">
-        <thead><tr><th>Quando</th><th>Nome</th><th>Endereço</th><th>Duração</th><th>Razão</th><th>Estado</th><th>Ações</th></tr></thead>
-        <tbody id="bans-tbody"></tbody>
-      </table>
-      <div class="actions">
-        <button id="btn-clear-all-bans" class="danger">Limpar TODOS os banimentos (rede de segurança)</button>
-      </div>
-      <p id="bans-feedback" class="hint"></p>
-    </section>
+    <div class="row">
+      <section class="card">
+        <h2>Histórico de banimentos</h2>
+        <p class="hint">Lista do que foi banido a partir deste painel. "Desbanir" tenta remover esse id específico — só funciona se corresponder exatamente ao que o motor guardou. Se não tiveres a certeza de qual é, usa a rede de segurança abaixo.</p>
+        <table id="bans-table" class="players-table">
+          <thead><tr><th>Quando</th><th>Nome</th><th>Endereço</th><th>Duração</th><th>Razão</th><th>Estado</th><th>Ações</th></tr></thead>
+          <tbody id="bans-tbody"></tbody>
+        </table>
+        <div class="actions">
+          <button id="btn-clear-all-bans" class="danger">Limpar TODOS os banimentos (rede de segurança)</button>
+        </div>
+        <p id="bans-feedback" class="hint"></p>
+      </section>
+    </div>
+  </div>
   </div>
 </div>
 

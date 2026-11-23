@@ -114,14 +114,38 @@ async function refreshStatus() {
     ? (status.managed ? '<span class="badge running">a correr</span>' : '<span class="badge unmanaged">a correr (fora do painel)</span>')
     : '<span class="badge stopped">parado</span>';
 
+  const rconDot = status.rconAvailable
+    ? '<span class="badge running">disponível</span>'
+    : '<span class="badge stopped">não configurado</span>';
+
   body.innerHTML = `
-    Estado: ${badge}<br>
-    IP do servidor: <strong>${status.ip}:${status.port}</strong>
-      <button type="button" class="secondary" id="btn-copy-ip" style="padding:2px 8px;font-size:12px">Copiar</button><br>
-    ${status.pid ? `PID: ${status.pid}<br>` : ''}
-    Modo ativo: ${status.activeMode || '-'}<br>
-    Mapa ativo: ${status.activeMap || '-'}<br>
-    RCON: ${status.rconAvailable ? 'disponível' : 'não configurado'}
+    <div class="stat-tile">
+      <div class="stat-label">Estado</div>
+      <div class="stat-value">${badge}</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-label">IP do servidor</div>
+      <div class="stat-value mono">${status.ip}:${status.port}
+        <button type="button" class="secondary copy-btn" id="btn-copy-ip">Copiar</button>
+      </div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-label">Modo ativo</div>
+      <div class="stat-value">${status.activeMode || '-'}</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-label">Mapa ativo</div>
+      <div class="stat-value">${status.activeMap || '-'}</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-label">RCON</div>
+      <div class="stat-value">${rconDot}</div>
+    </div>
+    ${status.pid ? `
+    <div class="stat-tile">
+      <div class="stat-label">PID</div>
+      <div class="stat-value mono">${status.pid}</div>
+    </div>` : ''}
   `;
   const copyBtn = document.getElementById('btn-copy-ip');
   if (copyBtn) {
