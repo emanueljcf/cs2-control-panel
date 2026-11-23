@@ -119,6 +119,14 @@ async function banPlayer(userid, minutes = 0, reason = 'Banido pelo administrado
   return command('writeid');
 }
 
+// Melhor esforço: remove um id da lista de banidos em memória e persiste.
+// Só funciona se "id" corresponder exatamente ao que o motor guardou - não
+// há comando nativo para confirmar isso de antemão.
+async function unbanId(id) {
+  await command(`removeid ${id}`);
+  return command('writeid');
+}
+
 module.exports = {
   isConfigured,
   command,
@@ -134,6 +142,7 @@ module.exports = {
   getPlayers,
   kickPlayer,
   banPlayer,
+  unbanId,
   parsePlayers,
   RconUnavailableError,
 };

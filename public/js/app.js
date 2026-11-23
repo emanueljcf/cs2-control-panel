@@ -145,8 +145,44 @@ function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
   document.getElementById('tab-painel').classList.toggle('hidden', tab !== 'painel');
   document.getElementById('tab-jogadores').classList.toggle('hidden', tab !== 'jogadores');
-  if (tab === 'jogadores') loadPlayers();
+  if (tab === 'jogadores') {
+    loadPlayers();
+    loadBans();
+  }
 }
+
+async function loadBans() {
+  const { bans } = await api.getBans();
+  const tbody = document.getElementById('bans-tbody');
+  if (!bans.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="hint">Sem histórico ainda.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = bans.map((b) => `
+    <tr data-id="${b.id}">
+      <td>${new Date(b.bannedAt).toLocaleString('pt-PT')}</td>
+      <td>${b.name || '-'}</td>
+      <td>${b.address || '-'}</td>
+      <td>${b.minutes === 0 ? 'Permanente' : `${b.minutes} min`}</td>
+      <td>${b.reason || '-'}</td>
+      <td>${b.liftedAt ? 'Levantado' : 'Ativo'}</td>
+      <td>${b.liftedAt ? '-' : '<button type="button" class="secondary btn-unban">Desbanir</button>'}</td>
+    </tr>
+  `).join('');
+  tbody.querySelectorAll('.btn-unban').forEach((btn) => btn.addEventListener('click', async (e) => {
+    const id = e.target.closest('tr').dataset.id;
+    const result = await api.unbanEntry(id);
+    document.getElementById('bans-feedback').textContent = result.warning || 'Tentativa de desbanir feita.';
+    loadBans();
+  }));
+}
+
+document.getElementById('btn-clear-all-bans')?.addEventListener('click', async () => {
+  if (!confirm('Isto apaga TODOS os banimentos guardados pelo motor (ficheiro). Continuar?')) return;
+  const result = await api.clearAllBans();
+  document.getElementById('bans-feedback').textContent = result.warning;
+  loadBans();
+});
 
 async function loadPlayers() {
   const warning = document.getElementById('players-warning');
@@ -179,11 +215,14 @@ async function loadPlayers() {
       loadPlayers();
     }));
     tbody.querySelectorAll('.btn-ban').forEach((btn) => btn.addEventListener('click', async (e) => {
-      const userid = e.target.closest('tr').dataset.userid;
+      const row = e.target.closest('tr');
+      const userid = row.dataset.userid;
+      const player = players.find((p) => p.userid === userid);
       const minutesStr = prompt('Duração do banimento em minutos (0 = permanente):', '60');
       if (minutesStr === null) return;
-      await api.banPlayer(userid, Number(minutesStr) || 0, 'Banido pelo administrador');
+      await api.banPlayer(userid, Number(minutesStr) || 0, 'Banido pelo administrador', player?.name, player?.address);
       loadPlayers();
+      loadBans();
     }));
   } catch (err) {
     warning.textContent = err.message || 'RCON indisponível — ativa-o e reinicia uma vez para ver os jogadores ligados.';

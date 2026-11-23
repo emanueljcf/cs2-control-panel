@@ -55,7 +55,11 @@ const api = {
 
   getPlayers: () => apiFetch('/api/players'),
   kickPlayer: (userid, reason) => apiFetch(`/api/players/${userid}/kick`, { method: 'POST', body: JSON.stringify({ reason }) }),
-  banPlayer: (userid, minutes, reason) => apiFetch(`/api/players/${userid}/ban`, { method: 'POST', body: JSON.stringify({ minutes, reason }) }),
+  banPlayer: (userid, minutes, reason, name, address) => apiFetch(`/api/players/${userid}/ban`, { method: 'POST', body: JSON.stringify({ minutes, reason, name, address }) }),
+  getBans: () => apiFetch('/api/players/bans'),
+  unbanEntry: (id) => apiFetch(`/api/players/bans/${id}/unban`, { method: 'POST' }),
+  getBansRaw: () => apiFetch('/api/players/bans/raw'),
+  clearAllBans: () => apiFetch('/api/players/bans/clear-all', { method: 'POST' }),
 
   getPresets: () => apiFetch('/api/presets'),
   savePreset: (name, baseMode) => apiFetch('/api/presets', { method: 'POST', body: JSON.stringify({ name, baseMode }) }),

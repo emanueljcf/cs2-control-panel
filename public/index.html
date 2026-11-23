@@ -132,6 +132,19 @@
       </table>
       <p class="hint">Atualiza automaticamente a cada 5 segundos. Banir usa a identidade local da sessão (limitação do modo LAN sem Steam real) — persiste em disco, mas se a mesma pessoa reconectar com um id diferente, pode não ser reconhecida.</p>
     </section>
+
+    <section class="card">
+      <h2>Histórico de banimentos</h2>
+      <p class="hint">Lista do que foi banido a partir deste painel. "Desbanir" tenta remover esse id específico — só funciona se corresponder exatamente ao que o motor guardou. Se não tiveres a certeza de qual é, usa a rede de segurança abaixo.</p>
+      <table id="bans-table" class="players-table">
+        <thead><tr><th>Quando</th><th>Nome</th><th>Endereço</th><th>Duração</th><th>Razão</th><th>Estado</th><th>Ações</th></tr></thead>
+        <tbody id="bans-tbody"></tbody>
+      </table>
+      <div class="actions">
+        <button id="btn-clear-all-bans" class="danger">Limpar TODOS os banimentos (rede de segurança)</button>
+      </div>
+      <p id="bans-feedback" class="hint"></p>
+    </section>
   </div>
 </div>
 
