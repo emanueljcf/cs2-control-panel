@@ -58,6 +58,24 @@ async function initDashboard() {
     loadModeSettings(mode);
   });
 
+  document.getElementById('btn-pause').addEventListener('click', async () => {
+    const isFixed = document.getElementById('pause-type-select').value === 'fixed';
+    const duration = isFixed ? Number(document.getElementById('pause-duration-input').value) : null;
+    const result = await api.pauseMatch(duration);
+    showLiveFeedback(result);
+    refreshPauseState();
+  });
+  document.getElementById('btn-unpause').addEventListener('click', async () => {
+    const result = await api.unpauseMatch();
+    showLiveFeedback(result);
+    refreshPauseState();
+  });
+  document.getElementById('pause-type-select').addEventListener('change', (e) => {
+    document.getElementById('pause-duration-input').disabled = e.target.value === 'indefinite';
+  });
+  refreshPauseState();
+  setInterval(refreshPauseState, 5000);
+
   document.getElementById('btn-save-mapcycle').addEventListener('click', saveMapcycle);
   document.getElementById('btn-save-server-settings').addEventListener('click', saveServerSettings);
   document.getElementById('settings-mode-select').addEventListener('change', (e) => loadModeSettings(e.target.value));
@@ -92,11 +110,19 @@ async function refreshStatus() {
 
   body.innerHTML = `
     Estado: ${badge}<br>
+    IP do servidor: <strong>${status.ip}:${status.port}</strong>
+      <button type="button" class="secondary" id="btn-copy-ip" style="padding:2px 8px;font-size:12px">Copiar</button><br>
     ${status.pid ? `PID: ${status.pid}<br>` : ''}
     Modo ativo: ${status.activeMode || '-'}<br>
     Mapa ativo: ${status.activeMap || '-'}<br>
     RCON: ${status.rconAvailable ? 'disponível' : 'não configurado'}
   `;
+  const copyBtn = document.getElementById('btn-copy-ip');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard?.writeText(`${status.ip}:${status.port}`).catch(() => {});
+    });
+  }
 
   document.getElementById('btn-adopt').classList.toggle('hidden', !(status.running && !status.managed));
 
@@ -106,6 +132,19 @@ async function refreshStatus() {
     rconWarning.classList.remove('hidden');
   } else {
     rconWarning.classList.add('hidden');
+  }
+}
+
+async function refreshPauseState() {
+  const { paused, until } = await api.getPauseState();
+  const el = document.getElementById('pause-status');
+  if (!paused) {
+    el.textContent = 'Jogo não está pausado.';
+  } else if (until) {
+    const remaining = Math.max(0, Math.round((new Date(until) - Date.now()) / 1000));
+    el.textContent = `Pausado — retoma automaticamente em ~${remaining}s.`;
+  } else {
+    el.textContent = 'Pausado indefinidamente — clica "Despausar" para retomar.';
   }
 }
 

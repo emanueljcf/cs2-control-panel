@@ -1,24 +1,10 @@
 // Wrapper fino sobre o protocolo Source RCON. Todas as ações aqui são "ao
 // vivo": nunca desconectam jogadores nem tocam no processo cs2.exe.
-const os = require('os');
 const Rcon = require('rcon-srcds').default || require('rcon-srcds');
 const settingsStore = require('./settingsStore');
+const { getLanIp } = require('./network');
 
 const TIMEOUT_MS = 3000;
-
-// O motor do CS2 liga o socket de RCON (TCP) ao IP da rede local da
-// máquina, não a 127.0.0.1 — confirmado nesta sessão (Test-NetConnection a
-// 127.0.0.1 falha, ao IP da LAN funciona). Por isso ligamos sempre ao IP
-// IPv4 ativo e não-interno, nunca a localhost.
-function lanHost() {
-  const nets = os.networkInterfaces();
-  for (const name of Object.keys(nets)) {
-    for (const net of nets[name]) {
-      if (net.family === 'IPv4' && !net.internal) return net.address;
-    }
-  }
-  return '127.0.0.1'; // fallback, não deverá ser necessário
-}
 
 function isConfigured() {
   const server = settingsStore.getServer();
@@ -30,7 +16,7 @@ async function withClient(fn) {
   if (!server.rcon_password) {
     throw new RconUnavailableError('rcon_password não está definido — ativa o RCON e reinicia uma vez.');
   }
-  const client = new Rcon({ host: lanHost(), port: server.port, timeout: TIMEOUT_MS });
+  const client = new Rcon({ host: getLanIp(), port: server.port, timeout: TIMEOUT_MS });
   try {
     await client.authenticate(server.rcon_password);
     return await fn(client);
@@ -67,6 +53,14 @@ async function changeMode(gameType, gameMode, currentMap) {
   return changeMap(currentMap);
 }
 
+async function pauseMatch() {
+  return command('mp_pause_match');
+}
+
+async function unpauseMatch() {
+  return command('mp_unpause_match');
+}
+
 async function quit() {
   return command('quit');
 }
@@ -83,6 +77,8 @@ module.exports = {
   restartMatch,
   restartRound,
   changeMode,
+  pauseMatch,
+  unpauseMatch,
   quit,
   status,
   RconUnavailableError,

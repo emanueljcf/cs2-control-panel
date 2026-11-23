@@ -43,6 +43,9 @@ const api = {
 
   restartMatch: () => apiFetch('/api/match/restart', { method: 'POST' }),
   restartRound: () => apiFetch('/api/match/restart-round', { method: 'POST' }),
+  pauseMatch: (durationSeconds) => apiFetch('/api/match/pause', { method: 'POST', body: JSON.stringify({ durationSeconds }) }),
+  unpauseMatch: () => apiFetch('/api/match/unpause', { method: 'POST' }),
+  getPauseState: () => apiFetch('/api/match/pause-state'),
 
   getModeSettings: (mode) => apiFetch(`/api/settings/modes/${mode}`),
   putModeSettings: (mode, changes) => apiFetch(`/api/settings/modes/${mode}`, { method: 'PUT', body: JSON.stringify({ changes }) }),

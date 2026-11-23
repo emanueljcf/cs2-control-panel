@@ -52,6 +52,18 @@
       <select id="mode-select"></select>
       <button id="btn-change-mode" class="live">Trocar modo</button>
     </div>
+    <div class="live-row">
+      <label>Pausar</label>
+      <select id="pause-type-select">
+        <option value="fixed">Tempo fixo</option>
+        <option value="indefinite">Indeterminada</option>
+      </select>
+      <input type="number" id="pause-duration-input" min="5" step="5" value="60" style="width:80px" />
+      <span class="hint">segundos (ignorado se "Indeterminada")</span>
+      <button id="btn-pause" class="live">Pausar</button>
+      <button id="btn-unpause" class="secondary">Despausar</button>
+    </div>
+    <p id="pause-status" class="hint"></p>
     <p id="live-feedback" class="hint"></p>
   </section>
 
