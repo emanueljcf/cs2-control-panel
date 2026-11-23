@@ -3,8 +3,7 @@
   "gameMode": 1,
   "label": "Competitivo",
   "overrides": {
-    "sv_vote_issue_pause_match_spec_only": 0,
-    "mp_maxrounds": 29
+    "sv_vote_issue_pause_match_spec_only": 0
   },
   "rawOverrides": {}
 }
