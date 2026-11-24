@@ -63,8 +63,21 @@ async function initDashboard() {
   document.getElementById('btn-revert-rounds').addEventListener('click', async () => {
     const rounds = Number(document.getElementById('revert-rounds-input').value);
     if (!Number.isInteger(rounds) || rounds < 1) return;
-    if (!confirm(`Isto repõe o jogo tal como estava há ${rounds} ronda(s) (placar, dinheiro, equipamento) e continua a partir daí. Continuar?`)) return;
     const statusEl = document.getElementById('revert-rounds-status');
+
+    // Vai buscar a lista mais recente agora (o estado no ecrã pode ter até
+    // 10s, ver o setInterval mais abaixo) para a confirmação mostrar sempre
+    // a ronda real para onde se vai voltar, mesmo que uma ronda tenha
+    // terminado entretanto.
+    const { backups } = await api.getRoundBackups();
+    const target = backups[rounds];
+    if (!target) {
+      statusEl.textContent = 'Não há histórico suficiente para reverter essa quantidade de rondas.';
+      statusEl.className = 'warning';
+      return;
+    }
+    if (!confirm(`Isto repõe o jogo tal como estava no fim da ronda ${target.round} (placar, dinheiro, equipamento) e continua a partir daí. Continuar?`)) return;
+
     try {
       const result = await api.revertRounds(rounds);
       showLiveFeedback(result);
@@ -72,7 +85,6 @@ async function initDashboard() {
       statusEl.className = 'hint';
     } catch (err) {
       showLiveFeedback({ applied: false, warning: err.message });
-    } finally {
       refreshRoundBackupsStatus();
     }
   });
@@ -402,14 +414,16 @@ async function refreshRoundBackupsStatus() {
   const el = document.getElementById('revert-rounds-status');
   const input = document.getElementById('revert-rounds-input');
   try {
-    const { latestRound, earliestRound } = await api.getRoundBackups();
+    const { latestRound, earliestRound, maxRevertRounds } = await api.getRoundBackups();
     if (latestRound === null) {
       el.textContent = 'Ainda sem backups de ronda guardados (fica disponível assim que a ronda atual terminar).';
       input.max = '';
+    } else if (maxRevertRounds < 1) {
+      el.textContent = `Só há 1 backup de ronda (ronda ${latestRound}) — precisa de pelo menos mais uma ronda terminada para poder reverter.`;
+      input.max = '';
     } else {
-      const maxRevert = Math.max(1, latestRound - earliestRound);
-      el.textContent = `Histórico disponível: ronda ${earliestRound} a ${latestRound} (podes reverter até ${maxRevert} ronda${maxRevert > 1 ? 's' : ''}).`;
-      input.max = String(maxRevert);
+      el.textContent = `Histórico disponível: ronda ${earliestRound} a ${latestRound} (podes reverter até ${maxRevertRounds} ronda${maxRevertRounds > 1 ? 's' : ''}).`;
+      input.max = String(maxRevertRounds);
     }
   } catch (_) {
     el.textContent = '';

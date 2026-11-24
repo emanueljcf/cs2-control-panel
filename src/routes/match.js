@@ -37,20 +37,29 @@ router.post('/restart-round', liveOnly(async (req, res) => {
 }));
 
 // Lista os backups de ronda disponíveis (um por ronda terminada, gravados
-// automaticamente pelo motor - ver mp_backup_round_file). Não exige o
-// servidor a correr: útil para a UI mostrar o histórico mesmo parado.
+// automaticamente pelo motor - ver mp_backup_round_file), da mais recente
+// para a mais antiga. Não exige o servidor a correr: útil para a UI mostrar
+// o histórico mesmo parado.
 router.get('/round-backups', (req, res) => {
   const backups = roundBackups.list();
+  // maxRevertRounds: é preciso o backup ANTERIOR ao mais recente para poder
+  // reverter 1 ronda - com só 1 backup na lista não há nenhum sítio para
+  // onde voltar.
   res.json({
     backups,
     latestRound: backups.length ? backups[0].round : null,
     earliestRound: backups.length ? backups[backups.length - 1].round : null,
+    maxRevertRounds: Math.max(0, backups.length - 1),
   });
 });
 
-// Ao vivo: reverte N rondas - repõe o estado logo depois da ronda
-// (mais recente - N) ter terminado (placar, dinheiro, equipamento) e o jogo
-// continua a partir daí, como se essas N rondas nunca tivessem acontecido.
+// Ao vivo: reverte N rondas - repõe o estado logo depois da N-ésima ronda
+// mais recente ter terminado (placar, dinheiro, equipamento) e o jogo
+// continua a partir daí, como se as últimas N rondas nunca tivessem
+// acontecido. O alvo é escolhido pela ORDEM dos backups (mais recente
+// primeiro, ver roundBackups.list), nunca por aritmética sobre o número de
+// ronda - ficheiros de partidas/mapas anteriores (nunca apagados pelo
+// motor) podem ter números de ronda mais altos sem serem os mais recentes.
 // Depende dos backups nativos do motor existirem para esse intervalo (ver
 // convar houseRule "mp_backup_round_file" nas Definições).
 router.post('/revert-rounds', liveOnly(async (req, res) => {
@@ -67,19 +76,19 @@ router.post('/revert-rounds', liveOnly(async (req, res) => {
     });
   }
 
-  const latestRound = backups[0].round;
-  const earliestRound = backups[backups.length - 1].round;
-  const targetRound = latestRound - rounds;
-  const target = backups.find((b) => b.round === targetRound);
+  const target = backups[rounds];
   if (!target) {
+    const maxRevertRounds = backups.length - 1;
     return res.status(409).json({
       applied: false,
-      error: `Só há histórico das rondas ${earliestRound} a ${latestRound} — não é possível reverter ${rounds} ronda(s) a partir daqui.`,
+      error: maxRevertRounds > 0
+        ? `Só há histórico para reverter até ${maxRevertRounds} ronda(s) a partir daqui.`
+        : 'Só há um backup de ronda disponível - não há mais nenhum para onde voltar.',
     });
   }
 
   await rcon.restoreRoundBackup(target.file);
-  res.json({ applied: true, live: true, revertedRounds: rounds, restoredToRound: targetRound });
+  res.json({ applied: true, live: true, revertedRounds: rounds, restoredToRound: target.round });
 }));
 
 // Ao vivo: reset completo - placar a zero e volta ao aquecimento, como se o
