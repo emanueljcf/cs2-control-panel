@@ -57,6 +57,8 @@ const CONVARS = [
   { key: 'sv_matchpause_auto_5v5', label: 'Pausar automaticamente se uma equipa ficar incompleta (<5)', category: 'Pausas', type: 'bool', default: false, modes: ['competitive', 'custom'], liveApplicable: true },
 
   // --- Jogadores / bots ---
+  { key: 'mp_limitteams', label: 'Diferença máxima permitida entre equipas (0 = sem limite)', category: 'Jogadores', type: 'int', min: 0, max: 10, step: 1, default: 2, modes: MODES, liveApplicable: true },
+  { key: 'mp_autoteambalance', label: 'Equilibrar equipas automaticamente (troca jogadores)', category: 'Jogadores', type: 'bool', default: true, modes: MODES, liveApplicable: true },
   { key: 'bot_quota', label: 'Nº de bots', category: 'Jogadores', type: 'int', min: 0, max: 32, step: 1, default: 0, modes: MODES, liveApplicable: true },
   { key: 'mp_autokick', label: 'Kick automático por idle/team-damage', category: 'Jogadores', type: 'bool', default: false, modes: MODES, liveApplicable: true },
   { key: 'mp_forcecamera', label: 'Câmara de morte restrita à própria equipa', category: 'Jogadores', type: 'enum',
