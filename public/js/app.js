@@ -36,6 +36,15 @@ async function initDashboard() {
     refreshStatus();
   });
 
+  document.getElementById('btn-check-update').addEventListener('click', checkForGameUpdate);
+  document.getElementById('btn-run-update').addEventListener('click', async () => {
+    if (!confirm('Isto para o servidor, atualiza o jogo e arranca outra vez. Desliga TODOS os jogadores durante uns minutos. Continuar?')) return;
+    await api.runUpdate();
+    pollUpdateProgress();
+  });
+  // Se uma atualização já estava em curso (ex. painel reiniciado a meio), retoma o acompanhamento.
+  api.getUpdateStatus().then((s) => { if (s.running) pollUpdateProgress(); });
+
   document.getElementById('btn-change-map').addEventListener('click', async () => {
     const map = document.getElementById('live-map-select').value;
     const result = await api.changeMap(map);
@@ -134,6 +143,56 @@ function showLiveFeedback(result) {
     el.textContent = result.warning || 'Não foi possível aplicar ao vivo — fica pendente.';
     el.className = 'warning';
   }
+}
+
+const UPDATE_PHASE_LABEL = {
+  stopping: 'A parar o servidor...',
+  downloading: 'A descarregar a atualização (pode demorar alguns minutos)...',
+  'reapplying-configs': 'A reaplicar as configurações...',
+  starting: 'A arrancar o servidor...',
+  done: 'Atualizado e a correr novamente.',
+  error: 'Falhou.',
+};
+
+async function checkForGameUpdate() {
+  const resultEl = document.getElementById('update-check-result');
+  const runBtn = document.getElementById('btn-run-update');
+  resultEl.textContent = 'A verificar...';
+  resultEl.className = 'hint';
+  try {
+    const { upToDate, localBuildId, remoteBuildId } = await api.checkUpdate();
+    if (upToDate) {
+      resultEl.textContent = `Servidor atualizado (build ${localBuildId}).`;
+      resultEl.className = 'hint';
+      runBtn.classList.add('hidden');
+    } else {
+      resultEl.textContent = `Atualização disponível: local ${localBuildId ?? '?'} → Steam ${remoteBuildId}.`;
+      resultEl.className = 'warning';
+      runBtn.classList.remove('hidden');
+    }
+  } catch (err) {
+    resultEl.textContent = `Não foi possível verificar: ${err.message}`;
+    resultEl.className = 'warning';
+  }
+}
+
+async function pollUpdateProgress() {
+  const progressEl = document.getElementById('update-progress');
+  const poll = async () => {
+    const state = await api.getUpdateStatus();
+    progressEl.textContent = UPDATE_PHASE_LABEL[state.phase] || state.phase || '';
+    progressEl.className = state.phase === 'error' ? 'warning' : 'hint';
+    if (state.running) {
+      setTimeout(poll, 3000);
+    } else if (state.phase === 'done') {
+      refreshStatus();
+      checkForGameUpdate();
+    } else if (state.error) {
+      progressEl.textContent = `Falhou: ${state.error}`;
+      progressEl.className = 'warning';
+    }
+  };
+  poll();
 }
 
 async function refreshStatus() {

@@ -27,6 +27,9 @@ const api = {
   changePassword: (currentPassword, newPassword) => apiFetch('/api/auth/change-password', { method: 'POST', body: JSON.stringify({ currentPassword, newPassword }) }),
 
   status: () => apiFetch('/api/status'),
+  checkUpdate: () => apiFetch('/api/update/check'),
+  runUpdate: () => apiFetch('/api/update/run', { method: 'POST' }),
+  getUpdateStatus: () => apiFetch('/api/update/status'),
   adopt: () => apiFetch('/api/status/adopt', { method: 'POST' }),
 
   serverStart: () => apiFetch('/api/server/start', { method: 'POST' }),

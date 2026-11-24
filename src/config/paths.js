@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config({ path: path.join(__dirname, '..', '..', envFile()) });
 
 function envFile() {
@@ -16,6 +17,18 @@ const PANEL_PORT = Number(process.env.PANEL_PORT || 3000);
 
 if (!CS2_ROOT) {
   throw new Error('CS2_ROOT não definido. Confirma que .env.development ou .env.production existe e tem CS2_ROOT.');
+}
+
+// Localiza o steamcmd.exe: respeita STEAMCMD_PATH se definido, senão tenta o
+// layout da release (tools/steamcmd.exe ao lado da pasta "app") e por fim o
+// layout usado durante o desenvolvimento desta sessão.
+function resolveSteamCmdPath() {
+  const candidates = [
+    process.env.STEAMCMD_PATH,
+    path.join(PROJECT_ROOT, '..', 'tools', 'steamcmd.exe'),
+    'C:\\SteamCMD\\steamcmd.exe',
+  ].filter(Boolean);
+  return candidates.find((p) => fs.existsSync(p)) || candidates[candidates.length - 1];
 }
 
 module.exports = {
@@ -42,4 +55,6 @@ module.exports = {
   AUTH_JSON: path.join(PROJECT_ROOT, 'config', 'auth.json'),
   RUNTIME_JSON: path.join(PROJECT_ROOT, 'state', `runtime.${currentEnv()}.json`),
   BACKUPS_DIR: path.join(PROJECT_ROOT, 'backups', 'cfg-snapshots'),
+  STEAMCMD_EXE: resolveSteamCmdPath(),
+  APPMANIFEST_730: path.join(CS2_ROOT, 'steamapps', 'appmanifest_730.acf'),
 };
