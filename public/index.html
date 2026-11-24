@@ -51,9 +51,10 @@
         <h2>Ações ao vivo (sem desligar ninguém)</h2>
         <div class="live-row">
           <label>Mapa</label>
-          <select id="live-map-select"></select>
+          <input type="text" id="live-map-select" list="map-options" placeholder="ex: de_dust2" style="width:220px" />
           <button id="btn-change-map" class="live">Trocar mapa</button>
         </div>
+        <p class="hint">Aceita qualquer mapa instalado (oficial, workshop ou comunidade) — não só os da lista sugerida.</p>
         <div class="live-row">
           <button id="btn-restart-match" class="live">Reiniciar partida / zerar placar</button>
           <button id="btn-restart-round" class="live">Reiniciar só a ronda atual</button>
@@ -83,6 +84,7 @@
     <div class="row cols-2">
       <section class="card">
         <h2>Rotação de mapas</h2>
+        <p class="warning">A troca automática de mapa só acontece no preset <strong>"LAN rotativo"</strong> (tem <code>mp_timelimit</code> definido) — o Competitivo/Casual/Deathmatch standard da Valve não troca de mapa sozinho, por desenho do próprio motor. Podes editar o "LAN rotativo" em "Definições por modo" e "Presets guardados", ou criar novos presets a partir dele, consoante precises.</p>
         <div id="mapcycle-editor"></div>
         <button id="btn-save-mapcycle" class="secondary">Guardar rotação</button>
       </section>

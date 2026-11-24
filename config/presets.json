@@ -1,13 +1,13 @@
 [
   {
-    "id": "competitive-1795475357516",
-    "name": "Primeiro a 15",
+    "id": "competitive-1795479343044",
+    "name": "LAN rotativo",
     "baseMode": "competitive",
     "overrides": {
       "sv_vote_issue_pause_match_spec_only": 0,
-      "mp_maxrounds": 29
+      "mp_timelimit": 30
     },
     "rawOverrides": {},
-    "createdAt": "2026-11-23T23:09:17.516Z"
+    "createdAt": "2026-11-24T00:15:43.044Z"
   }
 ]

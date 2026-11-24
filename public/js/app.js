@@ -270,13 +270,26 @@ async function refreshPauseState() {
 
 async function loadMaps() {
   const { available, mapcycle } = await api.getMaps();
-  const select = document.getElementById('live-map-select');
-  select.innerHTML = available.map((m) => `<option value="${m}">${m}</option>`).join('');
+
+  // Datalist partilhado: sugere os mapas instalados, mas o campo é de texto
+  // livre - aceita qualquer nome (workshop, comunidade, etc.), não só os
+  // mapas oficiais da lista.
+  let datalist = document.getElementById('map-options');
+  if (!datalist) {
+    datalist = document.createElement('datalist');
+    datalist.id = 'map-options';
+    document.body.appendChild(datalist);
+  }
+  datalist.innerHTML = available.map((m) => `<option value="${m}"></option>`).join('');
+
+  const liveInput = document.getElementById('live-map-select');
+  liveInput.setAttribute('list', 'map-options');
+  if (!liveInput.value) liveInput.value = available[0] || '';
 
   const editor = document.getElementById('mapcycle-editor');
-  editor.innerHTML = mapcycle.map((m, i) => `
-    <div class="live-row" data-index="${i}">
-      <select class="mapcycle-select">${available.map((a) => `<option value="${a}" ${a === m ? 'selected' : ''}>${a}</option>`).join('')}</select>
+  editor.innerHTML = mapcycle.map((m) => `
+    <div class="live-row">
+      <input type="text" class="mapcycle-select" list="map-options" value="${m}" placeholder="ex: de_dust2 ou workshop/123456/nome" />
       <button type="button" class="secondary mapcycle-remove">Remover</button>
     </div>
   `).join('') + '<button type="button" id="mapcycle-add" class="secondary">+ Adicionar mapa</button>';
@@ -287,7 +300,7 @@ async function loadMaps() {
   document.getElementById('mapcycle-add').addEventListener('click', () => {
     const row = document.createElement('div');
     row.className = 'live-row';
-    row.innerHTML = `<select class="mapcycle-select">${available.map((a) => `<option value="${a}">${a}</option>`).join('')}</select><button type="button" class="secondary mapcycle-remove">Remover</button>`;
+    row.innerHTML = `<input type="text" class="mapcycle-select" list="map-options" placeholder="ex: de_dust2 ou workshop/123456/nome" /><button type="button" class="secondary mapcycle-remove">Remover</button>`;
     row.querySelector('.mapcycle-remove').addEventListener('click', () => row.remove());
     editor.insertBefore(row, document.getElementById('mapcycle-add'));
   });
