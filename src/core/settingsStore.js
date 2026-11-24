@@ -60,6 +60,9 @@ function defaultServerJson() {
     // Qualquer edicao que nao corresponda a um preset guardado mostra-se
     // na UI como "Custom" ate ser guardada com um nome.
     activePresetId: null,
+    // Regras gerais do servidor (ver convarRegistry.houseRule) - aplicam-se
+    // sempre, em todos os modos/presets, por cima de tudo o resto.
+    houseRules: {},
   };
 }
 
@@ -138,11 +141,18 @@ function matchesPreset(mode, presetId) {
 // usada para gerar os .cfg (ver cfgGenerator.generateMode).
 function getEffectiveOverrides(mode) {
   const server = getServer();
+  let overrides = {};
+  let rawOverrides = {};
   if (server.activeMode === mode && server.activePresetId) {
     const preset = getPreset(server.activePresetId);
-    if (preset) return { overrides: preset.overrides, rawOverrides: preset.rawOverrides };
+    if (preset) {
+      overrides = { ...preset.overrides };
+      rawOverrides = { ...preset.rawOverrides };
+    }
   }
-  return { overrides: {}, rawOverrides: {} };
+  // Regras gerais do servidor ganham sempre a qualquer preset.
+  overrides = { ...overrides, ...(server.houseRules || {}) };
+  return { overrides, rawOverrides };
 }
 
 module.exports = {

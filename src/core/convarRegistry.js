@@ -57,8 +57,13 @@ const CONVARS = [
   { key: 'sv_matchpause_auto_5v5', label: 'Pausar automaticamente se uma equipa ficar incompleta (<5)', category: 'Pausas', type: 'bool', default: false, modes: ['competitive', 'custom'], liveApplicable: true },
 
   // --- Jogadores / bots ---
-  { key: 'mp_limitteams', label: 'Diferença máxima permitida entre equipas (0 = sem limite)', category: 'Jogadores', type: 'int', min: 0, max: 10, step: 1, default: 2, modes: MODES, liveApplicable: true },
-  { key: 'mp_autoteambalance', label: 'Equilibrar equipas automaticamente (troca jogadores)', category: 'Jogadores', type: 'bool', default: true, modes: MODES, liveApplicable: true },
+  // houseRule: true -> regra geral do servidor, aplica-se SEMPRE, independente
+  // de qual preset/modo está ativo (ao contrário dos restantes campos acima,
+  // que só valem para o modo que está a ser editado). Vive em
+  // server.json.houseRules, nunca em <mode>.json, e é escrita em cima de
+  // qualquer preset ao gerar cada gamemode_X.cfg.
+  { key: 'mp_limitteams', label: 'Diferença máxima permitida entre equipas (0 = sem limite)', category: 'Jogadores', type: 'int', min: 0, max: 10, step: 1, default: 2, modes: MODES, liveApplicable: true, houseRule: true },
+  { key: 'mp_autoteambalance', label: 'Equilibrar equipas automaticamente (troca jogadores)', category: 'Jogadores', type: 'bool', default: true, modes: MODES, liveApplicable: true, houseRule: true },
   { key: 'bot_quota', label: 'Nº de bots', category: 'Jogadores', type: 'int', min: 0, max: 32, step: 1, default: 0, modes: MODES, liveApplicable: true },
   { key: 'mp_autokick', label: 'Kick automático por idle/team-damage', category: 'Jogadores', type: 'bool', default: false, modes: MODES, liveApplicable: true },
   { key: 'mp_forcecamera', label: 'Câmara de morte restrita à própria equipa', category: 'Jogadores', type: 'enum',
@@ -84,7 +89,11 @@ function get(key) {
 }
 
 function forMode(mode) {
-  return CONVARS.filter((c) => c.modes.includes('*') || c.modes.includes(mode));
+  return CONVARS.filter((c) => !c.houseRule && (c.modes.includes('*') || c.modes.includes(mode)));
+}
+
+function houseRules() {
+  return CONVARS.filter((c) => c.houseRule);
 }
 
 function isLiveApplicable(key) {
@@ -92,4 +101,4 @@ function isLiveApplicable(key) {
   return Boolean(entry && entry.liveApplicable);
 }
 
-module.exports = { CONVARS, MODES, get, forMode, isLiveApplicable };
+module.exports = { CONVARS, MODES, get, forMode, houseRules, isLiveApplicable };

@@ -397,13 +397,16 @@ function readFieldValue(entry, el) {
 async function loadServerSettings() {
   const settings = await api.getServerSettings();
   const fields = convarsCache.convars.filter((c) => c.modes.includes('*'));
+  const houseRuleFields = convarsCache.convars.filter((c) => c.houseRule);
   const form = document.getElementById('server-settings-form');
-  form.innerHTML = fields.map((f) => renderField(f, settings[f.key])).join('');
+  form.innerHTML = fields.map((f) => renderField(f, settings[f.key])).join('')
+    + (houseRuleFields.length ? '<hr class="divider" style="grid-column:1/-1" />' : '')
+    + houseRuleFields.map((f) => renderField(f, (settings.houseRules || {})[f.key])).join('');
 }
 
 async function saveServerSettings() {
   const form = document.getElementById('server-settings-form');
-  const fields = convarsCache.convars.filter((c) => c.modes.includes('*'));
+  const fields = convarsCache.convars.filter((c) => c.modes.includes('*') || c.houseRule);
   const changes = {};
   fields.forEach((entry) => {
     const el = form.querySelector(`[data-key="${entry.key}"]`);

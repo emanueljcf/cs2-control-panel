@@ -24,7 +24,12 @@ router.post('/start', async (req, res) => {
 
 router.get('/settings', (req, res) => {
   const server = settingsStore.getServer();
-  res.json({ ...server, sv_password: server.sv_password ? '••••••••' : '', rcon_password: server.rcon_password ? '••••••••' : '' });
+  res.json({
+    ...server,
+    sv_password: server.sv_password ? '••••••••' : '',
+    rcon_password: server.rcon_password ? '••••••••' : '',
+    houseRuleFields: registry.houseRules(),
+  });
 });
 
 router.put('/settings', async (req, res) => {
@@ -36,18 +41,27 @@ router.put('/settings', async (req, res) => {
   const appliedLive = [];
   const pendingRestart = [];
   const warnings = [];
+  let houseRuleChanged = false;
 
   for (const [key, value] of Object.entries(changes)) {
-    if (key === 'sv_password' || key === 'rcon_password' || key === '••••••••') {
-      // nunca sobrescrever com o placeholder mascarado
-      if (value === '••••••••') continue;
+    if ((key === 'sv_password' || key === 'rcon_password') && value === '••••••••') {
+      continue; // nunca sobrescrever com o placeholder mascarado
     }
-    server[key] = value;
 
     const entry = registry.get(key);
+    const isHouseRule = Boolean(entry && entry.houseRule);
+
+    if (isHouseRule) {
+      server.houseRules = server.houseRules || {};
+      server.houseRules[key] = value;
+      houseRuleChanged = true;
+    } else {
+      server[key] = value;
+    }
+
     const liveApplicable = entry ? entry.liveApplicable : false;
 
-    if (liveApplicable && rconReady && (key === 'hostname' || key === 'sv_password')) {
+    if (liveApplicable && rconReady) {
       try {
         await rcon.setConvar(key, typeof value === 'string' ? `"${value}"` : value);
         appliedLive.push(key);
@@ -55,17 +69,30 @@ router.put('/settings', async (req, res) => {
         pendingRestart.push(key);
         warnings.push(`${key}: não foi possível aplicar ao vivo (${err.message}), fica para o próximo arranque.`);
       }
-    } else if (key === 'maxplayers' || key === 'port' || key === 'rcon_password') {
+    } else if (!liveApplicable) {
       pendingRestart.push(key);
       warnings.push(`${key}: esta alteração só é aplicada depois de reiniciar o servidor.`);
+    } else if (!rconReady) {
+      pendingRestart.push(key);
+      warnings.push(`${key}: RCON indisponível — fica pendente até ativares RCON e reiniciares uma vez.`);
     }
   }
 
   settingsStore.setServer(server);
-  // mantém server.cfg (ex. rcon_password) em sincronia com o JSON, mesmo
-  // que a alteração só faça efeito no próximo arranque.
-  const { targetPath, finalText } = cfgGenerator.generateServerCfg();
-  fs.writeFileSync(targetPath, finalText, 'utf8');
+
+  // server.cfg (hostname/rcon_password/etc.) fica sempre em sincronia.
+  const serverCfg = cfgGenerator.generateServerCfg();
+  fs.writeFileSync(serverCfg.targetPath, serverCfg.finalText, 'utf8');
+
+  // Uma regra geral afeta os 4 modos - regenera todos os .cfg para ficarem
+  // corretos no próximo load/restart, mesmo nos modos que não estão ativos.
+  if (houseRuleChanged) {
+    for (const mode of registry.MODES) {
+      const { targetPath, finalText } = cfgGenerator.generateMode(mode);
+      fs.writeFileSync(targetPath, finalText, 'utf8');
+    }
+  }
+
   res.json({ saved: true, appliedLive, pendingRestart, pendingNextLoad: [], warnings });
 });
 
