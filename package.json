@@ -1,6 +1,6 @@
 {
   "name": "cs2-control-panel",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "Painel web de controlo do servidor dedicado CS2 LAN",
   "main": "src/server.js",
