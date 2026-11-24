@@ -19,4 +19,14 @@ async function verify(password) {
   return bcrypt.compare(password, auth.passwordHash);
 }
 
-module.exports = { isSetUp, setup, verify };
+// Exige sempre a password atual, mesmo com sessão já autenticada - defesa
+// extra para quem tenha acesso físico a uma sessão aberta sem saber a
+// password real.
+async function changePassword(currentPassword, newPassword) {
+  const ok = await verify(currentPassword);
+  if (!ok) throw new Error('Password atual incorreta.');
+  const passwordHash = await bcrypt.hash(newPassword, 12);
+  settingsStore.atomicWriteJson(paths.AUTH_JSON, { passwordHash });
+}
+
+module.exports = { isSetUp, setup, verify, changePassword };

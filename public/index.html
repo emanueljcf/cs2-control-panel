@@ -94,6 +94,16 @@
         <div id="server-settings-form" class="settings-grid"></div>
         <button id="btn-save-server-settings" class="secondary">Guardar</button>
         <p id="server-settings-feedback" class="hint"></p>
+        <hr class="divider" />
+        <h2>Mudar password do painel</h2>
+        <p class="hint">O painel só é acessível a partir deste PC (não está exposto à rede). Mesmo assim, é sempre preciso saber a password atual para a mudar.</p>
+        <div class="settings-grid">
+          <div class="field"><label>Password atual</label><input type="password" id="change-pw-current" /></div>
+          <div class="field"><label>Nova password (mín. 8 caracteres)</label><input type="password" id="change-pw-new" minlength="8" /></div>
+          <div class="field"><label>Confirmar nova password</label><input type="password" id="change-pw-confirm" minlength="8" /></div>
+        </div>
+        <button id="btn-change-password" class="secondary">Mudar password</button>
+        <p id="change-password-feedback" class="hint"></p>
       </section>
     </div>
 

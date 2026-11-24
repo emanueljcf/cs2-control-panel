@@ -27,7 +27,9 @@ const CONVARS = [
   { key: 'mp_maxrounds', label: 'Nº de rondas da partida', category: 'Rondas', type: 'int', min: 0, max: 99, step: 1, default: 24, modes: MODES, liveApplicable: true },
   { key: 'mp_match_can_clinch', label: 'Permitir vitória antecipada (mercy rule)', category: 'Rondas', type: 'bool', default: true, modes: MODES, liveApplicable: true },
   { key: 'mp_match_restart_delay', label: 'Segundos até reiniciar após o fim da partida', category: 'Rondas', type: 'int', min: 1, max: 60, step: 1, default: 15, modes: MODES, liveApplicable: true },
-  { key: 'mp_endmatch_votenextmap', label: 'Votação para o próximo mapa no fim da partida', category: 'Rondas', type: 'bool', default: false, modes: MODES, liveApplicable: true },
+  { key: 'mp_endmatch_votenextmap', label: 'Votação para o próximo mapa no fim da partida', category: 'Rondas', type: 'bool', default: true, modes: MODES, liveApplicable: true },
+  { key: 'mp_endmatch_votenextmap_keepcurrent', label: 'Incluir o mapa atual nas opções de voto', category: 'Rondas', type: 'bool', default: true, modes: MODES, liveApplicable: true },
+  { key: 'mp_endmatch_votenextleveltime', label: 'Tempo para votar o próximo mapa (seg)', category: 'Rondas', type: 'int', min: 5, max: 60, step: 5, default: 20, modes: MODES, liveApplicable: true },
 
   // --- Economia ---
   { key: 'mp_free_armor', label: 'Colete/casco automático', category: 'Economia', type: 'enum',

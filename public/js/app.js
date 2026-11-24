@@ -82,6 +82,34 @@ async function initDashboard() {
     loadPlayers();
   }, 5000);
 
+  document.getElementById('btn-change-password').addEventListener('click', async () => {
+    const current = document.getElementById('change-pw-current').value;
+    const next = document.getElementById('change-pw-new').value;
+    const confirm = document.getElementById('change-pw-confirm').value;
+    const feedback = document.getElementById('change-password-feedback');
+    if (next.length < 8) {
+      feedback.textContent = 'A nova password tem de ter pelo menos 8 caracteres.';
+      feedback.className = 'warning';
+      return;
+    }
+    if (next !== confirm) {
+      feedback.textContent = 'A confirmação não corresponde à nova password.';
+      feedback.className = 'warning';
+      return;
+    }
+    try {
+      await api.changePassword(current, next);
+      feedback.textContent = 'Password alterada com sucesso.';
+      feedback.className = 'hint';
+      document.getElementById('change-pw-current').value = '';
+      document.getElementById('change-pw-new').value = '';
+      document.getElementById('change-pw-confirm').value = '';
+    } catch (err) {
+      feedback.textContent = err.message || 'Não foi possível mudar a password.';
+      feedback.className = 'warning';
+    }
+  });
+
   document.getElementById('btn-save-mapcycle').addEventListener('click', saveMapcycle);
   document.getElementById('btn-save-server-settings').addEventListener('click', saveServerSettings);
   document.getElementById('settings-mode-select').addEventListener('change', (e) => loadModeSettings(e.target.value));
