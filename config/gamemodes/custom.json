@@ -2,8 +2,6 @@
   "gameType": 3,
   "gameMode": 0,
   "label": "Custom",
-  "overrides": {
-    "sv_vote_issue_pause_match_spec_only": 0
-  },
+  "overrides": {},
   "rawOverrides": {}
 }

@@ -55,6 +55,7 @@ async function initDashboard() {
     const result = await api.changeMode(mode);
     showLiveFeedback(result);
     refreshStatus();
+    document.getElementById('settings-mode-select').value = mode;
     loadModeSettings(mode);
   });
 
@@ -113,9 +114,9 @@ async function initDashboard() {
   document.getElementById('btn-save-mapcycle').addEventListener('click', saveMapcycle);
   document.getElementById('btn-save-server-settings').addEventListener('click', saveServerSettings);
   document.getElementById('settings-mode-select').addEventListener('change', (e) => loadModeSettings(e.target.value));
-  document.getElementById('btn-save-mode-settings').addEventListener('click', saveModeSettings);
+  document.getElementById('btn-apply-mode-settings').addEventListener('click', applyModeSettingsLive);
   document.getElementById('btn-save-as-preset').addEventListener('click', saveAsPreset);
-  document.getElementById('btn-save-raw').addEventListener('click', saveRawOverrides);
+  document.getElementById('raw-overrides').addEventListener('input', () => markModeDirty());
   document.getElementById('btn-apply-all').addEventListener('click', async () => {
     await api.applyAll(false);
     alert('Ficheiros .cfg reconstruídos a partir das definições guardadas.');
@@ -310,25 +311,41 @@ async function loadMaps() {
   }
   datalist.innerHTML = available.map((m) => `<option value="${m}"></option>`).join('');
 
+  const quickpickOptions = '<option value="">Mapas comuns...</option>' + available.map((m) => `<option value="${m}">${m}</option>`).join('');
+
+  function wireQuickpick(select, input) {
+    select.innerHTML = quickpickOptions;
+    select.addEventListener('change', () => {
+      if (select.value) input.value = select.value;
+      select.value = '';
+    });
+  }
+
   const liveInput = document.getElementById('live-map-select');
   liveInput.setAttribute('list', 'map-options');
   if (!liveInput.value) liveInput.value = available[0] || '';
+  wireQuickpick(document.querySelector('.map-quickpick[data-target="live-map-select"]'), liveInput);
 
   const editor = document.getElementById('mapcycle-editor');
   editor.innerHTML = mapcycle.map((m) => `
     <div class="live-row">
       <input type="text" class="mapcycle-select" list="map-options" value="${m}" placeholder="ex: de_dust2 ou workshop/123456/nome" />
+      <select class="map-quickpick"></select>
       <button type="button" class="secondary mapcycle-remove">Remover</button>
     </div>
   `).join('') + '<button type="button" id="mapcycle-add" class="secondary">+ Adicionar mapa</button>';
 
+  editor.querySelectorAll('.live-row').forEach((row) => {
+    wireQuickpick(row.querySelector('.map-quickpick'), row.querySelector('.mapcycle-select'));
+  });
   editor.querySelectorAll('.mapcycle-remove').forEach((btn) => btn.addEventListener('click', (e) => {
     e.target.closest('.live-row').remove();
   }));
   document.getElementById('mapcycle-add').addEventListener('click', () => {
     const row = document.createElement('div');
     row.className = 'live-row';
-    row.innerHTML = `<input type="text" class="mapcycle-select" list="map-options" placeholder="ex: de_dust2 ou workshop/123456/nome" /><button type="button" class="secondary mapcycle-remove">Remover</button>`;
+    row.innerHTML = `<input type="text" class="mapcycle-select" list="map-options" placeholder="ex: de_dust2 ou workshop/123456/nome" /><select class="map-quickpick"></select><button type="button" class="secondary mapcycle-remove">Remover</button>`;
+    wireQuickpick(row.querySelector('.map-quickpick'), row.querySelector('.mapcycle-select'));
     row.querySelector('.mapcycle-remove').addEventListener('click', () => row.remove());
     editor.insertBefore(row, document.getElementById('mapcycle-add'));
   });
@@ -401,18 +418,23 @@ async function saveServerSettings() {
 
 async function loadModeSettings(mode) {
   if (!mode) return;
-  const { fields, values, isCustom, activePresetId } = await api.getModeSettings(mode);
+  const { fields, values, raw, activePresetId } = await api.getModeSettings(mode);
   const form = document.getElementById('mode-settings-form');
   form.innerHTML = fields.filter((f) => !f.modes.includes('*')).map((f) => renderField(f, values[f.key])).join('');
   form.dataset.mode = mode;
   form.dataset.dirty = 'false';
   form.querySelectorAll('input,select').forEach((el) => el.addEventListener('input', () => markModeDirty()));
 
+  const rawTextarea = document.getElementById('raw-overrides');
+  rawTextarea.value = Object.entries(raw || {}).map(([k, v]) => `${k} ${v}`).join('\n');
+  rawTextarea.dataset.mode = mode;
+
+  await refreshModeBadge(activePresetId);
+}
+
+async function refreshModeBadge(activePresetId) {
   const badge = document.getElementById('mode-status-badge');
-  if (isCustom) {
-    badge.textContent = 'Custom (modificado)';
-    badge.className = 'badge unmanaged';
-  } else if (activePresetId) {
+  if (activePresetId) {
     const preset = (await api.getPresets()).presets.find((p) => p.id === activePresetId);
     badge.textContent = preset ? `Preset: ${preset.name}` : 'Preset';
     badge.className = 'badge running';
@@ -425,20 +447,38 @@ async function loadModeSettings(mode) {
 function markModeDirty() {
   document.getElementById('mode-settings-form').dataset.dirty = 'true';
   const badge = document.getElementById('mode-status-badge');
-  badge.textContent = 'Custom (não guardado)';
+  badge.textContent = 'Custom (não guardado — Competitivo/Casual/Deathmatch nunca se alteram diretamente)';
   badge.className = 'badge unmanaged';
 }
 
-async function saveAsPreset() {
+// Lê o estado atual do formulário (campos + avançado) tal como está no ecrã
+// agora - é esta a fonte usada tanto por "Aplicar" como por "Guardar preset".
+function collectCurrentModeState() {
   const form = document.getElementById('mode-settings-form');
   const mode = form.dataset.mode;
+  const fields = convarsCache.convars.filter((c) => !c.modes.includes('*'));
+  const overrides = {};
+  fields.forEach((entry) => {
+    const el = form.querySelector(`[data-key="${entry.key}"]`);
+    if (el) overrides[entry.key] = readFieldValue(entry, el);
+  });
+  const rawOverrides = {};
+  document.getElementById('raw-overrides').value.split('\n').map((l) => l.trim()).filter(Boolean).forEach((line) => {
+    const [key, ...rest] = line.split(/\s+/);
+    if (key) rawOverrides[key] = rest.join(' ');
+  });
+  return { mode, overrides, rawOverrides };
+}
+
+async function saveAsPreset() {
+  const { mode, overrides, rawOverrides } = collectCurrentModeState();
   const name = prompt('Nome para este preset (ex: "Torneio sexta-feira"):');
   if (!name) return;
-  await saveModeSettings(); // garante que o que está no formulário foi gravado primeiro
-  await api.savePreset(name, mode);
+  const result = await api.savePreset(name, mode, overrides, rawOverrides);
   await loadPresets();
   await loadModeSettings(mode);
-  alert(`Preset "${name}" guardado.`);
+  document.getElementById('mode-settings-form').dataset.dirty = 'false';
+  alert(`Preset "${name}" guardado${result.live ? ' e aplicado ao vivo.' : '.'}`);
 }
 
 async function loadPresets() {
@@ -457,10 +497,15 @@ async function loadPresets() {
   `).join('');
   list.querySelectorAll('.preset-apply').forEach((btn) => btn.addEventListener('click', async (e) => {
     const id = e.target.closest('[data-id]').dataset.id;
+    const preset = presets.find((p) => p.id === id);
     const result = await api.applyPreset(id);
     showLiveFeedback(result);
     refreshStatus();
-    loadModeSettings(document.getElementById('settings-mode-select').value);
+    if (preset) {
+      document.getElementById('settings-mode-select').value = preset.baseMode;
+      document.getElementById('mode-select').value = preset.baseMode;
+      loadModeSettings(preset.baseMode);
+    }
   }));
   list.querySelectorAll('.preset-delete').forEach((btn) => btn.addEventListener('click', async (e) => {
     const id = e.target.closest('[data-id]').dataset.id;
@@ -474,33 +519,16 @@ function settingsModeLabel(mode) {
   return { competitive: 'Competitivo', casual: 'Casual', deathmatch: 'Deathmatch', custom: 'Custom' }[mode] || mode;
 }
 
-async function saveModeSettings() {
-  const form = document.getElementById('mode-settings-form');
-  const mode = form.dataset.mode;
-  const fields = convarsCache.convars.filter((c) => !c.modes.includes('*'));
-  const changes = {};
-  fields.forEach((entry) => {
-    const el = form.querySelector(`[data-key="${entry.key}"]`);
-    if (el) changes[entry.key] = readFieldValue(entry, el);
-  });
-  const result = await api.putModeSettings(mode, changes);
+// "Aplicar": só ao vivo via RCON, nunca persiste. Se não for guardado como
+// preset com nome, perde-se ao reiniciar o servidor ou o painel.
+async function applyModeSettingsLive() {
+  const { mode, overrides, rawOverrides } = collectCurrentModeState();
+  const changes = { ...overrides, ...rawOverrides };
+  const result = await api.applyModeLive(mode, changes);
   const feedback = document.getElementById('mode-settings-feedback');
   const parts = [];
-  if (result.appliedLive.length) parts.push(`Aplicado ao vivo: ${result.appliedLive.join(', ')}.`);
-  if (result.pendingNextLoad.length) parts.push(`Fica pendente até esse modo ser carregado: ${result.pendingNextLoad.join(', ')}.`);
+  if (result.appliedLive.length) parts.push(`Aplicado ao vivo (não guardado): ${result.appliedLive.join(', ')}.`);
   if (result.warnings.length) parts.push(...result.warnings);
-  feedback.textContent = parts.join(' ') || 'Guardado.';
-  feedback.className = result.warnings.length ? 'warning' : 'hint';
-}
-
-async function saveRawOverrides() {
-  const text = document.getElementById('raw-overrides').value;
-  const changes = {};
-  text.split('\n').map((l) => l.trim()).filter(Boolean).forEach((line) => {
-    const [key, ...rest] = line.split(/\s+/);
-    if (key) changes[key] = rest.join(' ');
-  });
-  const mode = document.getElementById('settings-mode-select').value;
-  await api.putModeSettings(mode, changes);
-  alert('Overrides avançados guardados (aplicam-se ao gerar os ficheiros).');
+  feedback.textContent = parts.join(' ') || 'Nada para aplicar.';
+  feedback.className = result.notApplied.length ? 'warning' : 'hint';
 }

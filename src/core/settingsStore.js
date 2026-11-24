@@ -129,6 +129,22 @@ function matchesPreset(mode, presetId) {
     && JSON.stringify(modeData.rawOverrides) === JSON.stringify(baseline.rawOverrides);
 }
 
+// Competitivo/Casual/Deathmatch/Custom nunca são editados diretamente - os
+// seus ficheiros <mode>.json ficam sempre "puros" (overrides={}). A única
+// forma de um modo deixar de ser standard é ter um preset guardado com nome
+// ativo (server.activePresetId, só válido quando server.activeMode===mode).
+// Edições pontuais nos campos só se aplicam ao vivo via RCON (ver
+// routes/settings.js) e nunca chegam aqui - por isso isto é a ÚNICA fonte
+// usada para gerar os .cfg (ver cfgGenerator.generateMode).
+function getEffectiveOverrides(mode) {
+  const server = getServer();
+  if (server.activeMode === mode && server.activePresetId) {
+    const preset = getPreset(server.activePresetId);
+    if (preset) return { overrides: preset.overrides, rawOverrides: preset.rawOverrides };
+  }
+  return { overrides: {}, rawOverrides: {} };
+}
+
 module.exports = {
   GAME_TYPE_MODE,
   getMode,
@@ -144,4 +160,5 @@ module.exports = {
   deletePreset,
   getPreset,
   matchesPreset,
+  getEffectiveOverrides,
 };

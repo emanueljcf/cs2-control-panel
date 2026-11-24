@@ -49,7 +49,7 @@ const api = {
   getPauseState: () => apiFetch('/api/match/pause-state'),
 
   getModeSettings: (mode) => apiFetch(`/api/settings/modes/${mode}`),
-  putModeSettings: (mode, changes) => apiFetch(`/api/settings/modes/${mode}`, { method: 'PUT', body: JSON.stringify({ changes }) }),
+  applyModeLive: (mode, changes) => apiFetch(`/api/settings/modes/${mode}/apply-live`, { method: 'POST', body: JSON.stringify({ changes }) }),
   applyAll: (dryRun = false) => apiFetch(`/api/settings/apply?dryRun=${dryRun}`, { method: 'POST' }),
 
   getConvars: () => apiFetch('/api/convars'),
@@ -63,7 +63,7 @@ const api = {
   clearAllBans: () => apiFetch('/api/players/bans/clear-all', { method: 'POST' }),
 
   getPresets: () => apiFetch('/api/presets'),
-  savePreset: (name, baseMode) => apiFetch('/api/presets', { method: 'POST', body: JSON.stringify({ name, baseMode }) }),
+  savePreset: (name, baseMode, overrides, rawOverrides) => apiFetch('/api/presets', { method: 'POST', body: JSON.stringify({ name, baseMode, overrides, rawOverrides }) }),
   applyPreset: (id) => apiFetch(`/api/presets/${id}/apply`, { method: 'POST' }),
   deletePreset: (id) => apiFetch(`/api/presets/${id}`, { method: 'DELETE' }),
 };

@@ -52,6 +52,7 @@
         <div class="live-row">
           <label>Mapa</label>
           <input type="text" id="live-map-select" list="map-options" placeholder="ex: de_dust2" style="width:220px" />
+          <select class="map-quickpick" data-target="live-map-select"><option value="">Mapas comuns...</option></select>
           <button id="btn-change-map" class="live">Trocar mapa</button>
         </div>
         <p class="hint">Aceita qualquer mapa instalado (oficial, workshop ou comunidade) — não só os da lista sugerida.</p>
@@ -116,10 +117,15 @@
           <span id="mode-status-badge" class="badge"></span>
         </div>
         <div id="mode-settings-form" class="settings-grid"></div>
+
+        <h2 style="margin-top:18px">Avançado (qualquer convar sem campo próprio acima)</h2>
+        <textarea id="raw-overrides" rows="4" placeholder="mp_exemplo 1&#10;outro_convar valor"></textarea>
+
         <div class="actions">
-          <button id="btn-save-mode-settings" class="secondary">Guardar (neste modo)</button>
-          <button id="btn-save-as-preset" class="live">Guardar como preset com nome...</button>
+          <button id="btn-apply-mode-settings" class="live">Aplicar (ao vivo, não guarda)</button>
+          <button id="btn-save-as-preset" class="secondary">Guardar como preset com nome...</button>
         </div>
+        <p class="hint">Competitivo, Casual e Deathmatch nunca são alterados diretamente — editar aqui é sempre "Custom" até guardares com um nome. "Aplicar" só afeta a sessão em curso; sem guardar como preset, perde-se ao reiniciar o servidor ou o painel.</p>
         <p id="mode-settings-feedback" class="hint"></p>
       </section>
     </div>
@@ -127,18 +133,9 @@
     <div class="row">
       <section class="card">
         <h2>Presets guardados</h2>
-        <p class="hint">Seleciona um modo acima para carregar as regras standard; assim que alteras algo, o estado passa a "Custom" e podes guardar como preset aqui para reutilizar no futuro.</p>
+        <p class="hint">Seleciona um modo acima para carregar as regras standard; assim que alteras algo, passa a "Custom" (não guardado) — guarda aqui com um nome para reutilizar no futuro, ou volta a selecionar o modo para descartar.</p>
         <div id="presets-list"></div>
-      </section>
-    </div>
-
-    <div class="row">
-      <section class="card muted-card">
-        <h2>Avançado</h2>
-        <p class="hint">Qualquer convar que ainda não tenha campo próprio acima. Aplica-se só ao gerar os ficheiros (não ao vivo).</p>
-        <textarea id="raw-overrides" rows="5" placeholder="mp_exemplo 1&#10;outro_convar valor"></textarea>
         <div class="actions">
-          <button id="btn-save-raw" class="secondary">Guardar avançado</button>
           <button id="btn-apply-all" class="secondary">Reaplicar todas as configurações aos ficheiros .cfg</button>
         </div>
       </section>
