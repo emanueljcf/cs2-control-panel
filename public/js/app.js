@@ -60,6 +60,23 @@ async function initDashboard() {
     const result = await api.restartRound();
     showLiveFeedback(result);
   });
+  document.getElementById('btn-revert-rounds').addEventListener('click', async () => {
+    const rounds = Number(document.getElementById('revert-rounds-input').value);
+    if (!Number.isInteger(rounds) || rounds < 1) return;
+    if (!confirm(`Isto repõe o jogo tal como estava há ${rounds} ronda(s) (placar, dinheiro, equipamento) e continua a partir daí. Continuar?`)) return;
+    const statusEl = document.getElementById('revert-rounds-status');
+    try {
+      const result = await api.revertRounds(rounds);
+      showLiveFeedback(result);
+      statusEl.textContent = `Revertido — o jogo voltou ao fim da ronda ${result.restoredToRound}.`;
+      statusEl.className = 'hint';
+    } catch (err) {
+      showLiveFeedback({ applied: false, warning: err.message });
+    } finally {
+      refreshRoundBackupsStatus();
+    }
+  });
+  refreshRoundBackupsStatus();
   document.getElementById('btn-reset-warmup').addEventListener('click', async () => {
     if (!confirm('Isto zera o placar e devolve o jogo ao aquecimento (ninguém é desconectado). Continuar?')) return;
     const result = await api.resetToWarmup();
@@ -96,6 +113,7 @@ async function initDashboard() {
   });
   refreshPauseState();
   setInterval(refreshPauseState, 5000);
+  setInterval(refreshRoundBackupsStatus, 10000);
 
   document.querySelectorAll('.tab-btn').forEach((btn) => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
   setInterval(() => {
@@ -377,6 +395,24 @@ async function refreshPauseState() {
     el.textContent = `Pausado — retoma automaticamente em ~${remaining}s.`;
   } else {
     el.textContent = 'Pausado indefinidamente — clica "Despausar" para retomar.';
+  }
+}
+
+async function refreshRoundBackupsStatus() {
+  const el = document.getElementById('revert-rounds-status');
+  const input = document.getElementById('revert-rounds-input');
+  try {
+    const { latestRound, earliestRound } = await api.getRoundBackups();
+    if (latestRound === null) {
+      el.textContent = 'Ainda sem backups de ronda guardados (fica disponível assim que a ronda atual terminar).';
+      input.max = '';
+    } else {
+      const maxRevert = Math.max(1, latestRound - earliestRound);
+      el.textContent = `Histórico disponível: ronda ${earliestRound} a ${latestRound} (podes reverter até ${maxRevert} ronda${maxRevert > 1 ? 's' : ''}).`;
+      input.max = String(maxRevert);
+    }
+  } catch (_) {
+    el.textContent = '';
   }
 }
 

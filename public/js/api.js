@@ -47,6 +47,8 @@ const api = {
 
   restartMatch: () => apiFetch('/api/match/restart', { method: 'POST' }),
   restartRound: () => apiFetch('/api/match/restart-round', { method: 'POST' }),
+  getRoundBackups: () => apiFetch('/api/match/round-backups'),
+  revertRounds: (rounds) => apiFetch('/api/match/revert-rounds', { method: 'POST', body: JSON.stringify({ rounds }) }),
   resetToWarmup: () => apiFetch('/api/match/reset-to-warmup', { method: 'POST' }),
   pauseMatch: (durationSeconds) => apiFetch('/api/match/pause', { method: 'POST', body: JSON.stringify({ durationSeconds }) }),
   unpauseMatch: () => apiFetch('/api/match/unpause', { method: 'POST' }),

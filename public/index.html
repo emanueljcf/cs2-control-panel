@@ -73,6 +73,14 @@
         </div>
         <p class="hint">"Reiniciar partida / zerar placar" zera o placar e passa por um breve aquecimento antes de retomar o jogo. "Reiniciar do zero" zera o placar e volta ao <strong>início</strong> de um aquecimento completo, tal como um mapa recém-carregado — com a regra de servidor ativa, só volta a arrancar a sério quando esse nº de jogadores estiver ligado outra vez.</p>
         <div class="live-row">
+          <label>Reverter</label>
+          <input type="number" id="revert-rounds-input" min="1" step="1" value="1" style="width:70px" />
+          <span class="hint">ronda(s)</span>
+          <button id="btn-revert-rounds" class="danger">Reverter rondas</button>
+        </div>
+        <p id="revert-rounds-status" class="hint"></p>
+        <p class="hint">Repõe o placar, dinheiro e equipamento tal como estavam no fim da ronda escolhida, e o jogo continua a partir daí — como se as últimas N rondas nunca tivessem acontecido. Usa os backups automáticos de ronda do próprio motor (um por ronda terminada); exige pelo menos essa quantidade de rondas já jogadas desde que o servidor arrancou com essa regra ativa.</p>
+        <div class="live-row">
           <label>Modo</label>
           <select id="mode-select"></select>
           <button id="btn-change-mode" class="live">Trocar modo</button>

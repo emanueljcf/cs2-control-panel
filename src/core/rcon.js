@@ -52,6 +52,15 @@ async function restartRound(delaySeconds = 3) {
   return command(`mp_restartround ${delaySeconds}`);
 }
 
+// Ao vivo: restaura o backup nativo de uma ronda anterior (ver
+// convarRegistry mp_backup_round_file + src/core/roundBackups.js) - repõe
+// placar/dinheiro/equipamento tal como estavam logo depois dessa ronda ter
+// terminado, e o jogo continua a partir daí. É assim que se "reverte" N
+// rondas: carrega-se o backup de (ronda atual - N).
+async function restoreRoundBackup(filename) {
+  return command(`mp_backup_restore_load_file "${filename}"`);
+}
+
 // Ao vivo: devolve o jogo ao INÍCIO de um aquecimento completo (não ao fim),
 // tal como um mapa recém-carregado. Importante: NÃO se pode combinar com um
 // mp_restartgame com atraso (ex. "mp_restartgame 1") - esse atraso dispara 1
@@ -172,6 +181,7 @@ module.exports = {
   changeMap,
   restartMatch,
   restartRound,
+  restoreRoundBackup,
   resetToWarmup,
   changeMode,
   pauseMatch,

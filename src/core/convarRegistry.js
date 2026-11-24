@@ -37,6 +37,12 @@ const CONVARS = [
   { key: 'mp_endmatch_votenextmap', label: 'Votação para o próximo mapa no fim da partida', category: 'Rondas', type: 'bool', default: true, modes: MODES, liveApplicable: true },
   { key: 'mp_endmatch_votenextmap_keepcurrent', label: 'Incluir o mapa atual nas opções de voto', category: 'Rondas', type: 'bool', default: true, modes: MODES, liveApplicable: true },
   { key: 'mp_endmatch_votenextleveltime', label: 'Tempo para votar o próximo mapa (seg)', category: 'Rondas', type: 'int', min: 5, max: 60, step: 5, default: 20, modes: MODES, liveApplicable: true },
+  // houseRule: true - mecanismo nativo do motor (sem plugins): a cada ronda
+  // terminada, o motor grava sozinho um ficheiro com o estado completo dessa
+  // ronda (placar, dinheiro, equipamento) em game/csgo, nomeado com este
+  // prefixo + o nº da ronda. E a unica forma real de "reverter" rondas -
+  // ver src/core/roundBackups.js e rcon.restoreRoundBackup (mp_backup_restore_load_file).
+  { key: 'mp_backup_round_file', label: 'Prefixo dos backups automáticos de ronda (necessário para poder reverter rondas)', category: 'Rondas', type: 'string', default: 'backup_round', modes: MODES, liveApplicable: true, houseRule: true },
 
   // --- Economia (armas e dinheiro) ---
   { key: 'mp_free_armor', label: 'Colete/casco automático', category: 'Economia (armas e dinheiro)', type: 'enum',
