@@ -1,0 +1,23 @@
+CS2 Control Panel - LEIA-ME
+============================
+
+Primeira utilização:
+
+1. Corre "Instalar-Servidor-CS2.bat" (duplo clique).
+   Vai descarregar o servidor dedicado do CS2 (~70GB) - demora bastante,
+   depende da tua ligação à internet. Só precisas de fazer isto uma vez
+   (ou quando quiseres atualizar o jogo para uma versão nova).
+
+2. Depois disso, corre "Iniciar.bat" (duplo clique).
+   Vai pedir permissão de Administrador (precisa disto para abrir a porta
+   na firewall automaticamente) - aceita.
+   O browser abre sozinho no painel de controlo.
+
+3. Na primeira vez que abrires o painel, ele pede para criares uma
+   password de administrador. Essa password fica só guardada neste PC.
+
+Para desligar tudo: usa o botão "Parar servidor" dentro do painel, ou
+fecha a janela preta (consola) do node.exe.
+
+Se precisares de reinstalar/atualizar o jogo mais tarde, corre
+"Instalar-Servidor-CS2.bat" outra vez (não apaga as tuas configurações).

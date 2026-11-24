@@ -1,6 +1,17 @@
 # Notas — Empacotar uma release "um clique"
 
-Status: **próximo passo**, a tratar depois de a branch `feature/presets-pause-knife` (ou a que estiver em curso nessa altura) ser testada, aprovada e integrada em `master`. Este documento é só o registo do que foi discutido — nada disto está implementado ainda.
+Status: **parcialmente implementado**. O essencial já funciona e foi testado (build isolado, nunca tocou no servidor de produção nem no painel em execução):
+
+- `scripts/build-release.ps1` — monta `dist/release/` com Node.js portátil, a app + dependências (`npm install --omit=dev`), e o SteamCMD incluído. Testado de ponta a ponta (arranca com o Node portátil, responde em HTTP).
+- `release-assets/Iniciar.bat` — pede admin automaticamente, cria `.env.production` na primeira vez, arranca o painel com o Node portátil, espera a porta e abre o browser sozinho.
+- `release-assets/Instalar-Servidor-CS2.bat` — corre o SteamCMD incluído para instalar/atualizar o servidor dedicado.
+- `release-assets/LEIA-ME.txt` — instruções para quem for usar.
+
+**Ainda por fazer:**
+- Assistente de primeira utilização *dentro* do painel (em vez do `.bat` separado para o SteamCMD) — ver secção 3 abaixo, continua por implementar.
+- Reaplicar configs automaticamente depois de um `validate` correndo através do `Instalar-Servidor-CS2.bat` (hoje é preciso abrir o painel e carregar manualmente em "Reaplicar configurações").
+- Empacotar tudo num único `.zip` para distribuição (hoje fica só na pasta `dist/release/`, não implementado o passo de compactar).
+- Instalador "a sério" (Inno Setup) — ainda não iniciado, ver secção 7.
 
 ## Objetivo
 

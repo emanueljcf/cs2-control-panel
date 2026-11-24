@@ -7,3 +7,4 @@ backups/
 config/auth.json
 config/server.*.json
 *.log
+dist/
