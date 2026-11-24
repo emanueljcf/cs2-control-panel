@@ -1,5 +1,6 @@
 let dashboardInitialized = false;
 let convarsCache = null;
+let presetsCache = [];
 
 async function initDashboard() {
   if (dashboardInitialized) {
@@ -59,13 +60,23 @@ async function initDashboard() {
     const result = await api.restartRound();
     showLiveFeedback(result);
   });
+  document.getElementById('btn-reset-warmup').addEventListener('click', async () => {
+    if (!confirm('Isto zera o placar e devolve o jogo ao aquecimento (ninguém é desconectado). Continuar?')) return;
+    const result = await api.resetToWarmup();
+    showLiveFeedback(result);
+  });
   document.getElementById('btn-change-mode').addEventListener('click', async () => {
-    const mode = document.getElementById('mode-select').value;
-    const result = await api.changeMode(mode);
+    const value = document.getElementById('mode-select').value;
+    let result;
+    if (value.startsWith('preset:')) {
+      result = await api.applyPreset(value.slice('preset:'.length));
+    } else {
+      result = await api.changeMode(value);
+    }
     showLiveFeedback(result);
     refreshStatus();
-    document.getElementById('settings-mode-select').value = mode;
-    loadModeSettings(mode);
+    document.getElementById('settings-mode-select').value = value;
+    loadModeSettings(value);
   });
 
   document.getElementById('btn-pause').addEventListener('click', async () => {
@@ -124,6 +135,7 @@ async function initDashboard() {
   document.getElementById('btn-save-server-settings').addEventListener('click', saveServerSettings);
   document.getElementById('settings-mode-select').addEventListener('change', (e) => loadModeSettings(e.target.value));
   document.getElementById('btn-apply-mode-settings').addEventListener('click', applyModeSettingsLive);
+  document.getElementById('btn-update-preset').addEventListener('click', updateExistingPreset);
   document.getElementById('btn-save-as-preset').addEventListener('click', saveAsPreset);
   document.getElementById('raw-overrides').addEventListener('input', () => markModeDirty());
   document.getElementById('btn-apply-all').addEventListener('click', async () => {
@@ -219,7 +231,7 @@ async function refreshStatus() {
     </div>
     <div class="stat-tile">
       <div class="stat-label">Modo ativo</div>
-      <div class="stat-value">${status.activeMode || '-'}</div>
+      <div class="stat-value">${activeModeLabel(status.activeMode, status.activePresetId)}</div>
     </div>
     <div class="stat-tile">
       <div class="stat-label">Mapa ativo</div>
@@ -317,6 +329,10 @@ async function loadPlayers() {
         <td>
           <button type="button" class="secondary btn-kick">Kick</button>
           <button type="button" class="danger btn-ban">Banir</button>
+          ${p.isBot ? `
+            <button type="button" class="live btn-bot-move" data-team="t">Mover p/ T</button>
+            <button type="button" class="live btn-bot-move" data-team="ct">Mover p/ CT</button>
+          ` : ''}
         </td>
       </tr>
     `).join('');
@@ -335,6 +351,14 @@ async function loadPlayers() {
       await api.banPlayer(userid, Number(minutesStr) || 0, 'Banido pelo administrador', player?.name, player?.address);
       loadPlayers();
       loadBans();
+    }));
+    tbody.querySelectorAll('.btn-bot-move').forEach((btn) => btn.addEventListener('click', async (e) => {
+      const row = e.target.closest('tr');
+      const userid = row.dataset.userid;
+      const player = players.find((p) => p.userid === userid);
+      const team = e.target.dataset.team;
+      await api.moveBotToTeam(player.name, team);
+      loadPlayers();
     }));
   } catch (err) {
     warning.textContent = err.message || 'RCON indisponível — ativa-o e reinicia uma vez para ver os jogadores ligados.';
@@ -416,11 +440,20 @@ async function saveMapcycle() {
   alert('Rotação de mapas guardada.');
 }
 
+// Os modos base (Competitivo/Casual/Deathmatch/Custom) e os presets guardados
+// aparecem juntos nestes dropdowns - um preset é só "o modo base + estas
+// definições específicas", por isso faz sentido poder selecioná-lo
+// diretamente aqui, tal como pedido. Valor "preset:<id>" distingue-os dos
+// modos base (valor simples, ex. "competitive").
 async function loadModes() {
-  const { modes, activeMode } = await api.getModes();
+  const [{ modes, activeMode, activePresetId }, { presets }] = await Promise.all([api.getModes(), api.getPresets()]);
+  presetsCache = presets;
   const liveSelect = document.getElementById('mode-select');
   const settingsSelect = document.getElementById('settings-mode-select');
-  const options = Object.entries(modes).map(([key, m]) => `<option value="${key}" ${key === activeMode ? 'selected' : ''}>${m.label}</option>`).join('');
+  const baseOptions = Object.entries(modes).map(([key, m]) => `<option value="${key}" ${!activePresetId && key === activeMode ? 'selected' : ''}>${m.label}</option>`).join('');
+  const presetOptions = presets.map((p) => `<option value="preset:${p.id}" ${activePresetId === p.id ? 'selected' : ''}>★ ${p.name} (${settingsModeLabel(p.baseMode)})</option>`).join('');
+  const options = `<optgroup label="Modos base">${baseOptions}</optgroup>`
+    + (presets.length ? `<optgroup label="Presets guardados">${presetOptions}</optgroup>` : '');
   liveSelect.innerHTML = options;
   settingsSelect.innerHTML = options;
 }
@@ -437,30 +470,48 @@ function renderField(entry, currentValue) {
   if (entry.type === 'bool') {
     input = `<select data-key="${entry.key}"><option value="true" ${value ? 'selected' : ''}>Sim</option><option value="false" ${!value ? 'selected' : ''}>Não</option></select>`;
   } else if (entry.type === 'enum') {
-    input = `<select data-key="${entry.key}">${entry.enumValues.map((o) => `<option value="${o.value}" ${Number(value) === o.value ? 'selected' : ''}>${o.label}</option>`).join('')}</select>`;
+    input = `<select data-key="${entry.key}">${entry.enumValues.map((o) => `<option value="${o.value}" ${String(value) === String(o.value) ? 'selected' : ''}>${o.label}</option>`).join('')}</select>`;
   } else if (entry.type === 'int' || entry.type === 'float') {
     input = `<input type="number" data-key="${entry.key}" value="${value}" min="${entry.min ?? ''}" max="${entry.max ?? ''}" step="${entry.step ?? 1}" />`;
   } else {
     input = `<input type="text" data-key="${entry.key}" value="${value ?? ''}" />`;
   }
-  return `<div class="field"><label>${entry.label} ${fieldLiveTag(entry)}</label>${input}</div>`;
+  const houseRuleTag = entry.houseRule ? ' <span class="houserule-tag">regra geral</span>' : '';
+  return `<div class="field"><label>${entry.label} ${fieldLiveTag(entry)}${houseRuleTag}</label>${input}</div>`;
+}
+
+// Agrupa os campos pela "category" do registry (Tempo, Rondas, Economia...)
+// e mantém a ordem em que essas categorias aparecem primeiro - não há lista
+// hardcoded de categorias aqui, vem toda do registry.
+function renderFieldsGrouped(fields, valueFor) {
+  const order = [];
+  const groups = new Map();
+  fields.forEach((f) => {
+    const cat = f.category || 'Outros';
+    if (!groups.has(cat)) { groups.set(cat, []); order.push(cat); }
+    groups.get(cat).push(f);
+  });
+  return order.map((cat) => `
+    <div class="settings-category">
+      <h3 class="settings-category-title">${cat}</h3>
+      <div class="settings-grid">${groups.get(cat).map((f) => renderField(f, valueFor(f))).join('')}</div>
+    </div>
+  `).join('');
 }
 
 function readFieldValue(entry, el) {
   if (entry.type === 'bool') return el.value === 'true';
-  if (entry.type === 'enum' || entry.type === 'int') return Number(el.value);
+  if (entry.type === 'enum') return typeof entry.enumValues[0].value === 'number' ? Number(el.value) : el.value;
+  if (entry.type === 'int') return Number(el.value);
   if (entry.type === 'float') return parseFloat(el.value);
   return el.value;
 }
 
 async function loadServerSettings() {
   const settings = await api.getServerSettings();
-  const fields = convarsCache.convars.filter((c) => c.modes.includes('*'));
-  const houseRuleFields = convarsCache.convars.filter((c) => c.houseRule);
+  const fields = convarsCache.convars.filter((c) => c.modes.includes('*') || c.houseRule);
   const form = document.getElementById('server-settings-form');
-  form.innerHTML = fields.map((f) => renderField(f, settings[f.key])).join('')
-    + (houseRuleFields.length ? '<hr class="divider" style="grid-column:1/-1" />' : '')
-    + houseRuleFields.map((f) => renderField(f, (settings.houseRules || {})[f.key])).join('');
+  form.innerHTML = renderFieldsGrouped(fields, (f) => (f.houseRule ? (settings.houseRules || {})[f.key] : settings[f.key]));
 }
 
 async function saveServerSettings() {
@@ -478,38 +529,67 @@ async function saveServerSettings() {
   refreshStatus();
 }
 
-async function loadModeSettings(mode) {
-  if (!mode) return;
-  const { fields, values, raw, activePresetId } = await api.getModeSettings(mode);
+// "value" é ou um modo base (ex. "competitive") ou "preset:<id>". Presets
+// carregam os próprios overrides guardados diretamente (sem perguntar ao
+// backend "quais são os efetivos agora"), porque editar um preset que não
+// está ativo neste momento ainda deve mostrar o que está guardado nele.
+async function loadModeSettings(value) {
+  if (!value) return;
   const form = document.getElementById('mode-settings-form');
-  form.innerHTML = fields.filter((f) => !f.modes.includes('*')).map((f) => renderField(f, values[f.key])).join('');
+  const rawTextarea = document.getElementById('raw-overrides');
+
+  if (value.startsWith('preset:')) {
+    const presetId = value.slice('preset:'.length);
+    const preset = presetsCache.find((p) => p.id === presetId);
+    if (!preset) return;
+    const fields = convarsCache.convars.filter((c) => !c.houseRule && !c.modes.includes('*') && c.modes.includes(preset.baseMode));
+    form.innerHTML = renderFieldsGrouped(fields, (f) => preset.overrides[f.key]);
+    form.dataset.mode = preset.baseMode;
+    form.dataset.presetId = preset.id;
+    form.dataset.dirty = 'false';
+    form.querySelectorAll('input,select').forEach((el) => el.addEventListener('input', () => markModeDirty()));
+
+    rawTextarea.value = Object.entries(preset.rawOverrides || {}).map(([k, v]) => `${k} ${v}`).join('\n');
+    rawTextarea.dataset.mode = preset.baseMode;
+
+    setModeBadge(`Preset: ${preset.name}`);
+    document.getElementById('btn-update-preset').classList.remove('hidden');
+    return;
+  }
+
+  const mode = value;
+  const { fields, values, raw, activePresetId } = await api.getModeSettings(mode);
+  form.innerHTML = renderFieldsGrouped(fields.filter((f) => !f.modes.includes('*')), (f) => values[f.key]);
   form.dataset.mode = mode;
+  delete form.dataset.presetId;
   form.dataset.dirty = 'false';
   form.querySelectorAll('input,select').forEach((el) => el.addEventListener('input', () => markModeDirty()));
 
-  const rawTextarea = document.getElementById('raw-overrides');
   rawTextarea.value = Object.entries(raw || {}).map(([k, v]) => `${k} ${v}`).join('\n');
   rawTextarea.dataset.mode = mode;
 
-  await refreshModeBadge(activePresetId);
-}
-
-async function refreshModeBadge(activePresetId) {
-  const badge = document.getElementById('mode-status-badge');
+  document.getElementById('btn-update-preset').classList.add('hidden');
   if (activePresetId) {
-    const preset = (await api.getPresets()).presets.find((p) => p.id === activePresetId);
-    badge.textContent = preset ? `Preset: ${preset.name}` : 'Preset';
-    badge.className = 'badge running';
+    const preset = presetsCache.find((p) => p.id === activePresetId);
+    setModeBadge(preset ? `A correr agora: preset "${preset.name}"` : 'A correr agora: preset');
   } else {
-    badge.textContent = 'Standard (Valve)';
-    badge.className = 'badge running';
+    setModeBadge('Standard (Valve)');
   }
 }
 
-function markModeDirty() {
-  document.getElementById('mode-settings-form').dataset.dirty = 'true';
+function setModeBadge(text) {
   const badge = document.getElementById('mode-status-badge');
-  badge.textContent = 'Custom (não guardado — Competitivo/Casual/Deathmatch nunca se alteram diretamente)';
+  badge.textContent = text;
+  badge.className = 'badge running';
+}
+
+function markModeDirty() {
+  const form = document.getElementById('mode-settings-form');
+  form.dataset.dirty = 'true';
+  const badge = document.getElementById('mode-status-badge');
+  badge.textContent = form.dataset.presetId
+    ? 'Editado — ainda não guardado neste preset (usa "Guardar neste preset" ou "Guardar como...")'
+    : 'Custom (não guardado — Competitivo/Casual/Deathmatch nunca se alteram diretamente)';
   badge.className = 'badge unmanaged';
 }
 
@@ -518,6 +598,7 @@ function markModeDirty() {
 function collectCurrentModeState() {
   const form = document.getElementById('mode-settings-form');
   const mode = form.dataset.mode;
+  const presetId = form.dataset.presetId || null;
   const fields = convarsCache.convars.filter((c) => !c.modes.includes('*'));
   const overrides = {};
   fields.forEach((entry) => {
@@ -529,7 +610,7 @@ function collectCurrentModeState() {
     const [key, ...rest] = line.split(/\s+/);
     if (key) rawOverrides[key] = rest.join(' ');
   });
-  return { mode, overrides, rawOverrides };
+  return { mode, presetId, overrides, rawOverrides };
 }
 
 async function saveAsPreset() {
@@ -538,13 +619,30 @@ async function saveAsPreset() {
   if (!name) return;
   const result = await api.savePreset(name, mode, overrides, rawOverrides);
   await loadPresets();
-  await loadModeSettings(mode);
-  document.getElementById('mode-settings-form').dataset.dirty = 'false';
+  await loadModes();
+  await loadModeSettings(`preset:${result.preset.id}`);
+  document.getElementById('settings-mode-select').value = `preset:${result.preset.id}`;
   alert(`Preset "${name}" guardado${result.live ? ' e aplicado ao vivo.' : '.'}`);
+}
+
+// Atualiza (overwrite) o preset que está a ser editado agora, em vez de
+// criar um novo com outro nome.
+async function updateExistingPreset() {
+  const { presetId, overrides, rawOverrides } = collectCurrentModeState();
+  if (!presetId) return;
+  const result = await api.updatePreset(presetId, overrides, rawOverrides);
+  await loadPresets();
+  document.getElementById('mode-settings-form').dataset.dirty = 'false';
+  const feedback = document.getElementById('mode-settings-feedback');
+  const parts = [`Preset atualizado${result.live ? ' e aplicado ao vivo (sem trocar de mapa).' : '.'}`];
+  if (result.warnings?.length) parts.push(...result.warnings);
+  feedback.textContent = parts.join(' ');
+  feedback.className = result.warnings?.length ? 'warning' : 'hint';
 }
 
 async function loadPresets() {
   const { presets } = await api.getPresets();
+  presetsCache = presets;
   const list = document.getElementById('presets-list');
   if (!presets.length) {
     list.innerHTML = '<p class="hint">Ainda não guardaste nenhum preset.</p>';
@@ -564,21 +662,32 @@ async function loadPresets() {
     showLiveFeedback(result);
     refreshStatus();
     if (preset) {
-      document.getElementById('settings-mode-select').value = preset.baseMode;
-      document.getElementById('mode-select').value = preset.baseMode;
-      loadModeSettings(preset.baseMode);
+      await loadModes();
+      document.getElementById('settings-mode-select').value = `preset:${id}`;
+      document.getElementById('mode-select').value = `preset:${id}`;
+      loadModeSettings(`preset:${id}`);
     }
   }));
   list.querySelectorAll('.preset-delete').forEach((btn) => btn.addEventListener('click', async (e) => {
     const id = e.target.closest('[data-id]').dataset.id;
     if (!confirm('Apagar este preset?')) return;
     await api.deletePreset(id);
-    loadPresets();
+    await loadPresets();
+    await loadModes();
   }));
 }
 
 function settingsModeLabel(mode) {
   return { competitive: 'Competitivo', casual: 'Casual', deathmatch: 'Deathmatch', custom: 'Custom' }[mode] || mode;
+}
+
+// Mostra o preset ativo (ex. "Competitivo — LAN rotativo") em vez de só o
+// modo base, para não parecer que o preset nunca entrou em efeito.
+function activeModeLabel(mode, activePresetId) {
+  const base = settingsModeLabel(mode) || '-';
+  if (!activePresetId) return base;
+  const preset = presetsCache.find((p) => p.id === activePresetId);
+  return preset ? `${base} — ${preset.name}` : base;
 }
 
 // "Aplicar": só ao vivo via RCON, nunca persiste. Se não for guardado como

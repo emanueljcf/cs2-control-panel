@@ -47,6 +47,7 @@ const api = {
 
   restartMatch: () => apiFetch('/api/match/restart', { method: 'POST' }),
   restartRound: () => apiFetch('/api/match/restart-round', { method: 'POST' }),
+  resetToWarmup: () => apiFetch('/api/match/reset-to-warmup', { method: 'POST' }),
   pauseMatch: (durationSeconds) => apiFetch('/api/match/pause', { method: 'POST', body: JSON.stringify({ durationSeconds }) }),
   unpauseMatch: () => apiFetch('/api/match/unpause', { method: 'POST' }),
   getPauseState: () => apiFetch('/api/match/pause-state'),
@@ -58,6 +59,7 @@ const api = {
   getConvars: () => apiFetch('/api/convars'),
 
   getPlayers: () => apiFetch('/api/players'),
+  moveBotToTeam: (name, team) => apiFetch(`/api/players/bots/${encodeURIComponent(name)}/move`, { method: 'POST', body: JSON.stringify({ team }) }),
   kickPlayer: (userid, reason) => apiFetch(`/api/players/${userid}/kick`, { method: 'POST', body: JSON.stringify({ reason }) }),
   banPlayer: (userid, minutes, reason, name, address) => apiFetch(`/api/players/${userid}/ban`, { method: 'POST', body: JSON.stringify({ minutes, reason, name, address }) }),
   getBans: () => apiFetch('/api/players/bans'),
@@ -67,6 +69,7 @@ const api = {
 
   getPresets: () => apiFetch('/api/presets'),
   savePreset: (name, baseMode, overrides, rawOverrides) => apiFetch('/api/presets', { method: 'POST', body: JSON.stringify({ name, baseMode, overrides, rawOverrides }) }),
+  updatePreset: (id, overrides, rawOverrides) => apiFetch(`/api/presets/${id}`, { method: 'PUT', body: JSON.stringify({ overrides, rawOverrides }) }),
   applyPreset: (id) => apiFetch(`/api/presets/${id}/apply`, { method: 'POST' }),
   deletePreset: (id) => apiFetch(`/api/presets/${id}`, { method: 'DELETE' }),
 };

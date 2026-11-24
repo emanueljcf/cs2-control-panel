@@ -69,7 +69,9 @@
         <div class="live-row">
           <button id="btn-restart-match" class="live">Reiniciar partida / zerar placar</button>
           <button id="btn-restart-round" class="live">Reiniciar só a ronda atual</button>
+          <button id="btn-reset-warmup" class="danger">Reiniciar do zero (placar + volta ao aquecimento)</button>
         </div>
+        <p class="hint">"Reiniciar partida / zerar placar" zera o placar e passa por um breve aquecimento antes de retomar o jogo. "Reiniciar do zero" zera o placar e volta ao <strong>início</strong> de um aquecimento completo, tal como um mapa recém-carregado — com a regra de servidor ativa, só volta a arrancar a sério quando esse nº de jogadores estiver ligado outra vez.</p>
         <div class="live-row">
           <label>Modo</label>
           <select id="mode-select"></select>
@@ -103,7 +105,7 @@
       <section class="card">
         <h2>Definições do servidor</h2>
         <p class="hint">Inclui regras gerais que se aplicam sempre, em qualquer modo/preset (ex: limite de desequilíbrio entre equipas) — ao contrário das "Definições por modo", estas guardam-se sempre diretamente.</p>
-        <div id="server-settings-form" class="settings-grid"></div>
+        <div id="server-settings-form" class="settings-categories"></div>
         <button id="btn-save-server-settings" class="secondary">Guardar</button>
         <p id="server-settings-feedback" class="hint"></p>
         <hr class="divider" />
@@ -127,16 +129,17 @@
           <select id="settings-mode-select"></select>
           <span id="mode-status-badge" class="badge"></span>
         </div>
-        <div id="mode-settings-form" class="settings-grid"></div>
+        <div id="mode-settings-form" class="settings-categories"></div>
 
         <h2 style="margin-top:18px">Avançado (qualquer convar sem campo próprio acima)</h2>
         <textarea id="raw-overrides" rows="4" placeholder="mp_exemplo 1&#10;outro_convar valor"></textarea>
 
         <div class="actions">
           <button id="btn-apply-mode-settings" class="live">Aplicar (ao vivo, não guarda)</button>
+          <button id="btn-update-preset" class="live hidden">Guardar neste preset</button>
           <button id="btn-save-as-preset" class="secondary">Guardar como preset com nome...</button>
         </div>
-        <p class="hint">Competitivo, Casual e Deathmatch nunca são alterados diretamente — editar aqui é sempre "Custom" até guardares com um nome. "Aplicar" só afeta a sessão em curso; sem guardar como preset, perde-se ao reiniciar o servidor ou o painel.</p>
+        <p class="hint">Competitivo, Casual e Deathmatch nunca são alterados diretamente — editar aqui é sempre "Custom" até guardares com um nome. "Aplicar" só afeta a sessão em curso; sem guardar, perde-se ao reiniciar o servidor ou o painel. Se estiveres a editar um preset já guardado (seleciona-o no "Editar modo" acima, junto aos modos base), usa "Guardar neste preset" para atualizar o mesmo preset, ou "Guardar como..." para criar um novo a partir dele.</p>
         <p id="mode-settings-feedback" class="hint"></p>
       </section>
     </div>
@@ -168,6 +171,7 @@
           <tbody id="players-tbody"></tbody>
         </table>
         <p class="hint">Atualiza automaticamente a cada 5 segundos. Banir usa a identidade local da sessão (limitação do modo LAN sem Steam real) — persiste em disco, mas se a mesma pessoa reconectar com um id diferente, pode não ser reconhecida.</p>
+        <p class="hint">Bots: "Mover p/ T"/"Mover p/ CT" expulsa o bot atual e pede um novo nessa equipa (fica com nome diferente — o motor não deixa mudar um bot existente de equipa mantendo a identidade). <strong>Jogadores humanos não podem ser movidos de equipa a partir daqui</strong>: o CS2 não tem nenhum comando de servidor para forçar a equipa de um jogador ligado (só a própria pessoa pode escolher, no menu do jogo) — isso precisaria de um plugin de administração, que nesta instalação está incompatível com o motor atual. O mais próximo disponível é desligar "Equilibrar equipas automaticamente" em Definições do servidor, para o motor parar de trocar as pessoas sozinho.</p>
       </section>
     </div>
 

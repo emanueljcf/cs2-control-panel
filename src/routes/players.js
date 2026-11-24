@@ -32,6 +32,16 @@ router.post('/:userid/kick', liveOnly(async (req, res) => {
   res.json({ applied: true });
 }));
 
+// Ao vivo, só para bots: expulsa o bot e pede um novo nessa equipa (fica com
+// nome novo - o motor não permite "mudar" um bot existente de equipa
+// mantendo a identidade). Não serve para jogadores humanos - ver nota em
+// core/rcon.js (não há comando nativo para isso).
+router.post('/bots/:name/move', liveOnly(async (req, res) => {
+  const team = req.body?.team === 'ct' ? 'ct' : 't';
+  await rcon.moveBotToTeam(req.params.name, team);
+  res.json({ applied: true });
+}));
+
 router.post('/:userid/ban', liveOnly(async (req, res) => {
   const { minutes, reason, name, address } = req.body || {};
   await rcon.banPlayer(req.params.userid, Number(minutes) || 0, reason);

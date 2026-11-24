@@ -16,6 +16,11 @@ Primeira utilização:
 3. Na primeira vez que abrires o painel, ele pede para criares uma
    password de administrador. Essa password fica só guardada neste PC.
 
+Depois da primeira vez, fica um atalho "CS2 Control Panel" no ambiente de
+trabalho - se o PC reiniciar (ex. falha de luz, Windows Update), um duplo
+clique nesse atalho volta a ligar tudo (painel + servidor CS2) sem precisar
+de repetir nenhum destes passos.
+
 Para desligar tudo: usa o botão "Parar servidor" dentro do painel, ou
 fecha a janela preta (consola) do node.exe.
 

@@ -35,6 +35,14 @@ router.post('/restart-round', liveOnly(async (req, res) => {
   res.json({ applied: true, live: true });
 }));
 
+// Ao vivo: reset completo - placar a zero e volta ao aquecimento, como se o
+// mapa tivesse acabado de carregar (aguarda de novo a houseRule de nº de
+// jogadores antes de o jogo arrancar sozinho).
+router.post('/reset-to-warmup', liveOnly(async (req, res) => {
+  await rcon.resetToWarmup();
+  res.json({ applied: true, live: true });
+}));
+
 // Estado da pausa - vive só em memória deste processo (como o runtime do
 // servidor); se o painel for reiniciado a meio de uma pausa temporizada,
 // o temporizador perde-se e a pausa fica indeterminada até se despausar

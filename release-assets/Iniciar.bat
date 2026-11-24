@@ -19,6 +19,11 @@ if not exist "node-runtime\node.exe" (
     exit /b 1
 )
 
+REM Deixa um atalho no ambiente de trabalho a apontar para este ficheiro, para
+REM depois de reiniciar o PC bastar um clique para religar tudo. So cria na
+REM primeira vez (nao faz nada se o atalho ja existir).
+powershell -NoProfile -Command "$p = Join-Path ([Environment]::GetFolderPath('Desktop')) 'CS2 Control Panel.lnk'; if (-not (Test-Path $p)) { $ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut($p); $s.TargetPath = '%~f0'; $s.WorkingDirectory = '%~dp0'; $s.WindowStyle = 7; $s.Description = 'Arranca o painel de controlo e o servidor CS2'; $s.Save() }"
+
 set NODE_ENV=production
 if not exist "app\.env.production" (
     echo Primeira utilizacao: a criar .env.production...

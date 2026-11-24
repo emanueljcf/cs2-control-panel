@@ -11,16 +11,23 @@
 const MODES = ['competitive', 'casual', 'deathmatch', 'custom'];
 
 const CONVARS = [
-  // --- Tempo ---
-  { key: 'mp_roundtime_defuse', label: 'Tempo de ronda (bomba)', category: 'Tempo', type: 'float', min: 0.5, max: 10, step: 0.01, default: 1.92, modes: MODES, liveApplicable: true },
-  { key: 'mp_roundtime', label: 'Tempo de ronda (genérico)', category: 'Tempo', type: 'float', min: 0.5, max: 10, step: 0.01, default: 1.92, modes: MODES, liveApplicable: true },
-  { key: 'mp_freezetime', label: 'Tempo de compra (freezetime)', category: 'Tempo', type: 'int', min: 0, max: 60, step: 1, default: 15, modes: MODES, liveApplicable: true },
-  { key: 'mp_timelimit', label: 'Limite de tempo do mapa (min, 0 = sem limite)', category: 'Tempo', type: 'int', min: 0, max: 120, step: 1, default: 0, modes: MODES, liveApplicable: true },
+  // --- Tempos de ronda ---
+  { key: 'mp_roundtime_defuse', label: 'Tempo de ronda (bomba)', category: 'Tempos de ronda', type: 'float', min: 0.5, max: 10, step: 0.01, default: 1.92, modes: MODES, liveApplicable: true },
+  { key: 'mp_roundtime', label: 'Tempo de ronda (genérico)', category: 'Tempos de ronda', type: 'float', min: 0.5, max: 10, step: 0.01, default: 1.92, modes: MODES, liveApplicable: true },
+  { key: 'mp_freezetime', label: 'Tempo de compra (freezetime)', category: 'Tempos de ronda', type: 'int', min: 0, max: 60, step: 1, default: 15, modes: MODES, liveApplicable: true },
+  { key: 'mp_timelimit', label: 'Limite de tempo do mapa (min, 0 = sem limite)', category: 'Tempos de ronda', type: 'int', min: 0, max: 120, step: 1, default: 0, modes: MODES, liveApplicable: true },
 
   // --- Aquecimento ---
-  { key: 'mp_warmuptime', label: 'Duração máxima do aquecimento (seg)', category: 'Aquecimento', type: 'int', min: 5, max: 999999, step: 5, default: 999999, modes: MODES, liveApplicable: true },
-  { key: 'mp_warmup_pausetimer', label: 'Pausar o temporizador de aquecimento', category: 'Aquecimento', type: 'bool', default: false, modes: MODES, liveApplicable: true },
-  { key: 'mp_endwarmup_player_count', label: 'Nº de jogadores que termina o aquecimento', category: 'Aquecimento', type: 'int', min: 1, max: 64, step: 1, default: 2, modes: MODES, liveApplicable: true },
+  // mp_warmuptime / mp_warmup_pausetimer / mp_endwarmup_player_count sao
+  // houseRule: true -> regra geral do servidor (ver nota mais abaixo em
+  // "Jogadores / bots"). Garantem, independentemente do preset/modo ativo,
+  // que o jogo fica em aquecimento a aguardar jogadores em vez de arrancar
+  // por tempo ou com poucos jogadores (confirmado nesta sessao que
+  // mp_warmup_pausetimer=1 bloqueia a transicao "termina ao atingir N
+  // jogadores", por isso forca-se sempre a 0 aqui tambem).
+  { key: 'mp_warmuptime', label: 'Duração máxima do aquecimento (seg, alto = só acaba pelo nº de jogadores)', category: 'Aquecimento', type: 'int', min: 5, max: 999999, step: 5, default: 999999, modes: MODES, liveApplicable: true, houseRule: true },
+  { key: 'mp_warmup_pausetimer', label: 'Pausar o temporizador de aquecimento', category: 'Aquecimento', type: 'bool', default: false, modes: MODES, liveApplicable: true, houseRule: true },
+  { key: 'mp_endwarmup_player_count', label: 'Nº de jogadores que termina o aquecimento e começa o jogo', category: 'Aquecimento', type: 'int', min: 1, max: 64, step: 1, default: 10, modes: MODES, liveApplicable: true, houseRule: true },
   { key: 'mp_warmuptime_all_players_connected', label: 'Contagem final após atingir esse nº (seg)', category: 'Aquecimento', type: 'int', min: 0, max: 600, step: 1, default: 6, modes: MODES, liveApplicable: true },
 
   // --- Rondas / vitória ---
@@ -31,16 +38,16 @@ const CONVARS = [
   { key: 'mp_endmatch_votenextmap_keepcurrent', label: 'Incluir o mapa atual nas opções de voto', category: 'Rondas', type: 'bool', default: true, modes: MODES, liveApplicable: true },
   { key: 'mp_endmatch_votenextleveltime', label: 'Tempo para votar o próximo mapa (seg)', category: 'Rondas', type: 'int', min: 5, max: 60, step: 5, default: 20, modes: MODES, liveApplicable: true },
 
-  // --- Economia ---
-  { key: 'mp_free_armor', label: 'Colete/casco automático', category: 'Economia', type: 'enum',
+  // --- Economia (armas e dinheiro) ---
+  { key: 'mp_free_armor', label: 'Colete/casco automático', category: 'Economia (armas e dinheiro)', type: 'enum',
     enumValues: [
       { value: 0, label: 'Compra manual' },
       { value: 1, label: 'Colete automático' },
       { value: 2, label: 'Colete + casco automático' },
     ], default: 0, modes: MODES, liveApplicable: true },
-  { key: 'mp_buy_anywhere', label: 'Comprar em qualquer lugar do mapa', category: 'Economia', type: 'bool', default: false, modes: MODES, liveApplicable: true },
-  { key: 'mp_startmoney', label: 'Dinheiro inicial', category: 'Economia', type: 'int', min: 0, max: 65000, step: 100, default: 800, modes: MODES, liveApplicable: true },
-  { key: 'mp_maxmoney', label: 'Dinheiro máximo', category: 'Economia', type: 'int', min: 0, max: 65000, step: 500, default: 16000, modes: MODES, liveApplicable: true },
+  { key: 'mp_buy_anywhere', label: 'Comprar em qualquer lugar do mapa', category: 'Economia (armas e dinheiro)', type: 'bool', default: false, modes: MODES, liveApplicable: true },
+  { key: 'mp_startmoney', label: 'Dinheiro inicial', category: 'Economia (armas e dinheiro)', type: 'int', min: 0, max: 65000, step: 100, default: 800, modes: MODES, liveApplicable: true },
+  { key: 'mp_maxmoney', label: 'Dinheiro máximo', category: 'Economia (armas e dinheiro)', type: 'int', min: 0, max: 65000, step: 500, default: 16000, modes: MODES, liveApplicable: true },
 
   // --- Pausas ---
   // Confirmado nesta sessao via "find timeout"/"find pause" no servidor real
@@ -65,6 +72,14 @@ const CONVARS = [
   { key: 'mp_limitteams', label: 'Diferença máxima permitida entre equipas (0 = sem limite)', category: 'Jogadores', type: 'int', min: 0, max: 10, step: 1, default: 2, modes: MODES, liveApplicable: true, houseRule: true },
   { key: 'mp_autoteambalance', label: 'Equilibrar equipas automaticamente (troca jogadores)', category: 'Jogadores', type: 'bool', default: true, modes: MODES, liveApplicable: true, houseRule: true },
   { key: 'bot_quota', label: 'Nº de bots', category: 'Jogadores', type: 'int', min: 0, max: 32, step: 1, default: 0, modes: MODES, liveApplicable: true },
+  // Trava a equipa que os bots escolhem a partir de agora (bots ja em jogo
+  // nao mudam so por isto - usar "mover bot de equipa" na aba Jogadores).
+  { key: 'bot_join_team', label: 'Equipa dos bots (novos bots a entrar)', category: 'Jogadores', type: 'enum',
+    enumValues: [
+      { value: 'any', label: 'Qualquer equipa (equilibra automaticamente)' },
+      { value: 'T', label: 'Só Terrorista' },
+      { value: 'CT', label: 'Só Contra-Terrorista' },
+    ], default: 'any', modes: MODES, liveApplicable: true },
   { key: 'mp_autokick', label: 'Kick automático por idle/team-damage', category: 'Jogadores', type: 'bool', default: false, modes: MODES, liveApplicable: true },
   { key: 'mp_forcecamera', label: 'Câmara de morte restrita à própria equipa', category: 'Jogadores', type: 'enum',
     enumValues: [

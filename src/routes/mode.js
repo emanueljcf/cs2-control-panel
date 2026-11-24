@@ -8,7 +8,7 @@ const router = express.Router();
 router.get('/', (req, res) => {
   const modes = settingsStore.GAME_TYPE_MODE;
   const server = settingsStore.getServer();
-  res.json({ modes, activeMode: server.activeMode });
+  res.json({ modes, activeMode: server.activeMode, activePresetId: server.activePresetId });
 });
 
 // Ao vivo por omissão: tenta RCON primeiro, só cai para aviso de restart se

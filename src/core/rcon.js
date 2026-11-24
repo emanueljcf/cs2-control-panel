@@ -2,6 +2,7 @@
 // vivo": nunca desconectam jogadores nem tocam no processo cs2.exe.
 const Rcon = require('rcon-srcds').default || require('rcon-srcds');
 const settingsStore = require('./settingsStore');
+const registry = require('./convarRegistry');
 const { getLanIp } = require('./network');
 
 const TIMEOUT_MS = 3000;
@@ -39,12 +40,35 @@ async function changeMap(mapName) {
   return command(`changelevel ${mapName}`);
 }
 
+// Ao vivo: zera o placar e reinicia a partida já a jogar (mp_restartgame),
+// e de seguida passa por um breve aquecimento antes de retomar - não é um
+// aquecimento completo desde o inicio (ver resetToWarmup para isso).
 async function restartMatch(delaySeconds = 3) {
-  return command(`mp_restartgame ${delaySeconds}`);
+  await command(`mp_restartgame ${delaySeconds}`);
+  return command('mp_warmup_start');
 }
 
 async function restartRound(delaySeconds = 3) {
   return command(`mp_restartround ${delaySeconds}`);
+}
+
+// Ao vivo: devolve o jogo ao INÍCIO de um aquecimento completo (não ao fim),
+// tal como um mapa recém-carregado. Importante: NÃO se pode combinar com um
+// mp_restartgame com atraso (ex. "mp_restartgame 1") - esse atraso dispara 1
+// segundo depois e corta o aquecimento recém-iniciado quase de imediato,
+// fazendo-o parecer que salta logo para o fim (bug confirmado nesta sessão).
+// Em vez disso, usa-se o comportamento documentado de mp_warmuptime:
+// "Changing this value resets warmup" - força a mudança (passa por um valor
+// intermédio) para garantir que o motor deteta a alteração e reinicia o
+// temporizador ao valor completo configurado, mesmo que o valor final seja
+// igual ao que já estava. Com a houseRule mp_endwarmup_player_count, o jogo
+// só volta a arrancar a sério quando esse nº de jogadores estiver ligado.
+async function resetToWarmup() {
+  const server = settingsStore.getServer();
+  const warmupTime = server.houseRules?.mp_warmuptime ?? registry.get('mp_warmuptime').default;
+  await command('mp_warmup_start');
+  await setConvar('mp_warmuptime', 1);
+  return setConvar('mp_warmuptime', warmupTime);
 }
 
 async function changeMode(gameType, gameMode, currentMap) {
@@ -127,6 +151,20 @@ async function unbanId(id) {
   return command('writeid');
 }
 
+// Ao vivo: não existe comando nativo para mudar um bot de equipa mantendo a
+// identidade - a única forma e expulsa-lo e pedir um novo bot nessa equipa
+// (fica com nome novo, atribuido pelo motor). Jogadores humanos NAO têm
+// equivalente: o motor não expõe nenhum comando de servidor para forçar a
+// equipa de um jogador ligado (confirmado via "find jointeam/changeteam/
+// switchteam/forceteam/movetoteam" - todos sem resultados). Isso só seria
+// possível com um plugin de administração (MatchZy/CS2Fixes via
+// MetaMod+CounterStrikeSharp), que nesta instalação está incompativel com a
+// build atual do motor (crash confirmado em sessão anterior).
+async function moveBotToTeam(name, team) {
+  await command(`bot_kick ${name}`);
+  return command(team === 'ct' ? 'bot_add_ct' : 'bot_add_t');
+}
+
 module.exports = {
   isConfigured,
   command,
@@ -134,6 +172,7 @@ module.exports = {
   changeMap,
   restartMatch,
   restartRound,
+  resetToWarmup,
   changeMode,
   pauseMatch,
   unpauseMatch,
@@ -143,6 +182,7 @@ module.exports = {
   kickPlayer,
   banPlayer,
   unbanId,
+  moveBotToTeam,
   parsePlayers,
   RconUnavailableError,
 };

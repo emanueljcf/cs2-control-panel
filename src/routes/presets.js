@@ -2,6 +2,7 @@ const express = require('express');
 const settingsStore = require('../core/settingsStore');
 const cfgGenerator = require('../core/cfgGenerator');
 const rcon = require('../core/rcon');
+const registry = require('../core/convarRegistry');
 const processManager = require('../core/processManager');
 const fs = require('fs');
 
@@ -45,6 +46,46 @@ router.post('/', async (req, res) => {
   }
 
   res.json({ saved: true, preset, live, warning });
+});
+
+// Atualiza (overwrite) um preset já existente com as definições atuais do
+// formulário - mesmo id/nome/baseMode, ao contrário de POST / que cria
+// sempre um preset novo. Nunca usa changelevel (evita reiniciar o mapa para
+// todos) - se este preset for o ativo agora, aplica cada convar ao vivo via
+// "set", exatamente como o botão "Aplicar" de Definições por modo.
+router.put('/:id', async (req, res) => {
+  const existing = settingsStore.getPreset(req.params.id);
+  if (!existing) return res.status(404).json({ error: 'preset-nao-encontrado' });
+
+  const { overrides, rawOverrides } = req.body || {};
+  const preset = settingsStore.updatePreset(req.params.id, { overrides, rawOverrides });
+
+  const server = settingsStore.getServer();
+  const isActivePreset = server.activeMode === existing.baseMode && server.activePresetId === existing.id;
+  const appliedLive = [];
+  const warnings = [];
+
+  if (isActivePreset) {
+    const { targetPath, finalText } = cfgGenerator.generateMode(existing.baseMode);
+    fs.writeFileSync(targetPath, finalText, 'utf8');
+
+    const status = processManager.isRunning();
+    const rconReady = status.running && rcon.isConfigured();
+    for (const [key, value] of Object.entries({ ...(overrides || {}), ...(rawOverrides || {}) })) {
+      const entry = registry.get(key);
+      const liveApplicable = entry ? entry.liveApplicable : true;
+      if (!liveApplicable || !rconReady) continue;
+      try {
+        await rcon.setConvar(key, value);
+        appliedLive.push(key);
+      } catch (err) {
+        warnings.push(`${key}: falhou a aplicação ao vivo (${err.message}).`);
+      }
+    }
+    if (!rconReady) warnings.push('RCON indisponível — fica pronto para a próxima vez que este preset for aplicado.');
+  }
+
+  res.json({ saved: true, preset, live: isActivePreset, appliedLive, warnings });
 });
 
 router.delete('/:id', (req, res) => {

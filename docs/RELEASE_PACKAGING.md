@@ -3,9 +3,11 @@
 Status: **parcialmente implementado**. O essencial já funciona e foi testado (build isolado, nunca tocou no servidor de produção nem no painel em execução):
 
 - `scripts/build-release.ps1` — monta `dist/release/` com Node.js portátil, a app + dependências (`npm install --omit=dev`), e o SteamCMD incluído. Testado de ponta a ponta (arranca com o Node portátil, responde em HTTP).
-- `release-assets/Iniciar.bat` — pede admin automaticamente, cria `.env.production` na primeira vez, arranca o painel com o Node portátil, espera a porta e abre o browser sozinho.
+- `release-assets/Iniciar.bat` — pede admin automaticamente, cria `.env.production` na primeira vez, **cria um atalho "CS2 Control Panel" no ambiente de trabalho na primeira vez** (idempotente — não recria se já existir), arranca o painel com o Node portátil, espera a porta e abre o browser sozinho.
 - `release-assets/Instalar-Servidor-CS2.bat` — corre o SteamCMD incluído para instalar/atualizar o servidor dedicado.
 - `release-assets/LEIA-ME.txt` — instruções para quem for usar.
+- **Arranque automático do servidor CS2** (`src/server.js`) — sempre que o painel arranca (pelo `Iniciar.bat`, pelo atalho, ou por uma Tarefa Agendada no logon), tenta logo arrancar também o servidor CS2 dedicado, sem precisar de clicar em "Arrancar" no painel. Não bloqueia o arranque do painel e não falha visivelmente se o CS2 ainda não estiver instalado — só regista o aviso na consola. Testado (ambiente de teste, porta alternativa): painel e servidor CS2 arrancam juntos com um único comando.
+- `Iniciar-Painel.bat` (na raiz do projeto, não faz parte da release) — equivalente ao `Iniciar.bat` mas para esta máquina de desenvolvimento/produção (usa o Node.js já instalado no sistema em vez do Node portátil). Já tem um atalho "CS2 Control Panel" no ambiente de trabalho desta máquina.
 
 **Ainda por fazer:**
 - Assistente de primeira utilização *dentro* do painel (em vez do `.bat` separado para o SteamCMD) — ver secção 3 abaixo, continua por implementar.
@@ -57,8 +59,9 @@ Alguém sem Claude Code e sem conhecimentos técnicos deve conseguir, a partir d
    - Mais profissional: instalador real (ex. Inno Setup) com assistente, atalho no Desktop/Menu Iniciar, manifesto a pedir admin automaticamente, desinstalador.
    - Decisão a tomar nessa altura, não urgente agora.
 
-8. **(Opcional) Arranque automático ao ligar o PC**
-   - Tarefa Agendada a arrancar o painel (e opcionalmente o próprio servidor CS2) no logon, útil numa LAN house sem alguém a vigiar depois de reiniciar a máquina.
+8. **(Opcional) Arranque totalmente automático ao ligar o PC, sem clicar em nada**
+   - Já implementado o essencial: um clique no atalho do ambiente de trabalho arranca painel + servidor CS2 juntos (ver acima). Isto ainda exige esse clique depois de reiniciar a máquina.
+   - Em falta, se for preciso zero cliques: Tarefa Agendada a correr `Iniciar.bat`/`Iniciar-Painel.bat` no logon do Windows.
 
 ## Bloqueado / a retomar antes disto fazer sentido por completo
 

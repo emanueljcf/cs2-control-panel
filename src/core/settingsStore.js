@@ -113,6 +113,17 @@ function savePreset({ name, baseMode, overrides, rawOverrides }) {
   return preset;
 }
 
+// Atualiza (overwrite) um preset já existente com novos overrides - mantém
+// id/name/baseMode. Ao contrário de savePreset, não cria uma entrada nova.
+function updatePreset(id, { overrides, rawOverrides }) {
+  const presets = getPresets();
+  const idx = presets.findIndex((p) => p.id === id);
+  if (idx === -1) return null;
+  presets[idx] = { ...presets[idx], overrides: overrides || {}, rawOverrides: rawOverrides || {} };
+  atomicWriteJson(paths.PRESETS_JSON, presets);
+  return presets[idx];
+}
+
 function deletePreset(id) {
   const presets = getPresets().filter((p) => p.id !== id);
   atomicWriteJson(paths.PRESETS_JSON, presets);
@@ -167,6 +178,7 @@ module.exports = {
   readJson,
   getPresets,
   savePreset,
+  updatePreset,
   deletePreset,
   getPreset,
   matchesPreset,

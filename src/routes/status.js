@@ -12,6 +12,7 @@ router.get('/', (req, res) => {
   res.json({
     ...proc,
     activeMode: server.activeMode,
+    activePresetId: server.activePresetId,
     activeMap: server.activeMap,
     rconAvailable: rcon.isConfigured(),
     ip: getLanIp(),

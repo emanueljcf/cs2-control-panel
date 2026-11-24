@@ -3,6 +3,7 @@ const session = require('express-session');
 const path = require('path');
 const paths = require('./config/paths');
 const requireAuth = require('./middleware/requireAuth');
+const processManager = require('./core/processManager');
 
 const app = express();
 
@@ -32,3 +33,14 @@ app.listen(paths.PANEL_PORT, '127.0.0.1', () => {
   console.log(`CS2 Control Panel a correr em http://127.0.0.1:${paths.PANEL_PORT}`);
   console.log(`A controlar o servidor em: ${paths.CS2_ROOT} (porta ${paths.CS2_GAME_PORT})`);
 });
+
+// Arranca o servidor CS2 automaticamente sempre que o painel arranca (ex.
+// depois de um reinício do PC) - "um clique liga tudo". Não bloqueia o
+// arranque do painel: se falhar (ex. CS2_ROOT ainda não instalado), só
+// regista o aviso - o painel continua acessível para diagnosticar/instalar.
+processManager.start()
+  .then((result) => {
+    if (result.started) console.log(`Servidor CS2 arrancado automaticamente (PID ${result.pid}).`);
+    else if (result.reason === 'already-running') console.log('Servidor CS2 já estava a correr.');
+  })
+  .catch((err) => console.error('Arranque automático do servidor CS2 falhou:', err.message));
