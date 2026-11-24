@@ -56,6 +56,10 @@ function defaultServerJson() {
     activeMode: 'competitive',
     activeMap: 'de_dust2',
     mapcycle: ['de_dust2', 'de_inferno', 'de_cache', 'de_mirage'],
+    // null = a usar as regras standard (sem personalizacao) desse modo.
+    // Qualquer edicao que nao corresponda a um preset guardado mostra-se
+    // na UI como "Custom" ate ser guardada com um nome.
+    activePresetId: null,
   };
 }
 
@@ -86,6 +90,61 @@ function mergeModeOverrides(modeData, changes) {
   return { modeData, applied, rejected };
 }
 
+// --- Presets guardados (biblioteca de regras com nome, reutilizavel) ---
+// Cada preset {id, name, baseMode, overrides, rawOverrides, createdAt}.
+// "Custom" nao e um preset fixo - e o estado transitorio de qualquer modo
+// base cujos overrides atuais nao correspondem a nenhum preset guardado
+// (incluindo o estado "standard", que e overrides={}).
+
+function getPresets() {
+  return readJson(paths.PRESETS_JSON, []);
+}
+
+function savePreset({ name, baseMode, overrides, rawOverrides }) {
+  if (!GAME_TYPE_MODE[baseMode]) throw new Error(`baseMode invalido: ${baseMode}`);
+  const presets = getPresets();
+  const id = `${baseMode}-${Date.now()}`;
+  const preset = { id, name, baseMode, overrides: overrides || {}, rawOverrides: rawOverrides || {}, createdAt: new Date().toISOString() };
+  presets.push(preset);
+  atomicWriteJson(paths.PRESETS_JSON, presets);
+  return preset;
+}
+
+function deletePreset(id) {
+  const presets = getPresets().filter((p) => p.id !== id);
+  atomicWriteJson(paths.PRESETS_JSON, presets);
+}
+
+function getPreset(id) {
+  return getPresets().find((p) => p.id === id);
+}
+
+// Compara os overrides atuais de um modo com os de um preset (ou com o
+// standard, quando presetId é null) para decidir se o estado é "Custom".
+function matchesPreset(mode, presetId) {
+  const modeData = getMode(mode);
+  const baseline = presetId ? getPreset(presetId) : { overrides: {}, rawOverrides: {} };
+  if (!baseline) return false;
+  return JSON.stringify(modeData.overrides) === JSON.stringify(baseline.overrides)
+    && JSON.stringify(modeData.rawOverrides) === JSON.stringify(baseline.rawOverrides);
+}
+
+// Competitivo/Casual/Deathmatch/Custom nunca são editados diretamente - os
+// seus ficheiros <mode>.json ficam sempre "puros" (overrides={}). A única
+// forma de um modo deixar de ser standard é ter um preset guardado com nome
+// ativo (server.activePresetId, só válido quando server.activeMode===mode).
+// Edições pontuais nos campos só se aplicam ao vivo via RCON (ver
+// routes/settings.js) e nunca chegam aqui - por isso isto é a ÚNICA fonte
+// usada para gerar os .cfg (ver cfgGenerator.generateMode).
+function getEffectiveOverrides(mode) {
+  const server = getServer();
+  if (server.activeMode === mode && server.activePresetId) {
+    const preset = getPreset(server.activePresetId);
+    if (preset) return { overrides: preset.overrides, rawOverrides: preset.rawOverrides };
+  }
+  return { overrides: {}, rawOverrides: {} };
+}
+
 module.exports = {
   GAME_TYPE_MODE,
   getMode,
@@ -96,4 +155,10 @@ module.exports = {
   mergeModeOverrides,
   atomicWriteJson,
   readJson,
+  getPresets,
+  savePreset,
+  deletePreset,
+  getPreset,
+  matchesPreset,
+  getEffectiveOverrides,
 };

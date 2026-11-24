@@ -10,60 +10,70 @@ const router = express.Router();
 router.get('/modes/:mode', (req, res) => {
   const { mode } = req.params;
   if (!registry.MODES.includes(mode)) return res.status(404).json({ error: 'modo-desconhecido' });
-  const modeData = settingsStore.getMode(mode);
-  res.json({ fields: registry.forMode(mode), values: { ...modeData.overrides }, raw: modeData.rawOverrides });
+  const server = settingsStore.getServer();
+  const activePresetId = server.activeMode === mode ? server.activePresetId : null;
+  // Competitivo/Casual/Deathmatch/Custom nunca têm overrides próprios
+  // persistidos - os valores mostrados vêm sempre do preset ativo (se
+  // houver) ou do standard puro.
+  const { overrides, rawOverrides } = settingsStore.getEffectiveOverrides(mode);
+  res.json({
+    fields: registry.forMode(mode),
+    values: { ...overrides },
+    raw: rawOverrides,
+    activePresetId,
+  });
 });
 
-// PUT /api/settings/modes/:mode  body: { changes: {convar: valor, ...} }
-router.put('/modes/:mode', async (req, res) => {
+// POST /api/settings/modes/:mode/apply-live  body: { changes: {convar: valor, ...} }
+// Aplica SÓ ao vivo via RCON, sem persistir em disco (ephemeral): se o
+// servidor reiniciar sem isto ter sido guardado como preset com nome,
+// perde-se - exatamente como pedido. Nunca escreve em <mode>.json.
+router.post('/modes/:mode/apply-live', async (req, res) => {
   const { mode } = req.params;
   if (!registry.MODES.includes(mode)) return res.status(404).json({ error: 'modo-desconhecido' });
 
   const changes = req.body?.changes || {};
-  const modeData = settingsStore.getMode(mode);
   const server = settingsStore.getServer();
   const status = processManager.isRunning();
   const isActiveMode = server.activeMode === mode;
   const rconReady = status.running && rcon.isConfigured();
 
   const appliedLive = [];
-  const pendingRestart = [];
-  const pendingNextLoad = [];
+  const notApplied = [];
   const warnings = [];
 
-  settingsStore.mergeModeOverrides(modeData, changes);
-
   for (const [key, value] of Object.entries(changes)) {
-    const liveApplicable = registry.isLiveApplicable(key);
+    // Convars registados respeitam a flag liveApplicable; convars "avançados"
+    // (fora do registry) são tentados ao vivo na mesma - confia-se no admin
+    // que os está a escrever à mão.
+    const entry = registry.get(key);
+    const liveApplicable = entry ? entry.liveApplicable : true;
 
     if (!liveApplicable) {
-      pendingRestart.push(key);
-      warnings.push(`${key}: esta alteração só é aplicada depois de reiniciar o servidor.`);
+      notApplied.push(key);
+      warnings.push(`${key}: este campo nunca é aplicável em runtime (precisa sempre de reiniciar).`);
       continue;
     }
     if (!rconReady) {
-      pendingRestart.push(key);
-      warnings.push(`${key}: RCON indisponível — fica pendente até ativares RCON e reiniciares uma vez.`);
+      notApplied.push(key);
+      warnings.push(`${key}: RCON indisponível — ativa-o e reinicia uma vez para poder aplicar ao vivo.`);
       continue;
     }
     if (!isActiveMode) {
-      pendingNextLoad.push(key);
+      notApplied.push(key);
+      warnings.push(`${key}: "${mode}" não é o modo ativo agora — nada para aplicar ao vivo.`);
       continue;
     }
     try {
       await rcon.setConvar(key, value);
       appliedLive.push(key);
     } catch (err) {
-      pendingRestart.push(key);
+      notApplied.push(key);
       warnings.push(`${key}: falhou a aplicação ao vivo (${err.message}).`);
     }
   }
 
-  settingsStore.setMode(mode, modeData);
-  const { targetPath, finalText } = cfgGenerator.generateMode(mode); // mantém o .cfg persistido em sincronia
-  require('fs').writeFileSync(targetPath, finalText, 'utf8');
-
-  res.json({ saved: true, appliedLive, pendingRestart, pendingNextLoad, warnings });
+  res.json({ appliedLive, notApplied, warnings, ephemeral: true });
 });
 
 router.post('/apply', (req, res) => {

@@ -35,4 +35,48 @@ router.post('/restart-round', liveOnly(async (req, res) => {
   res.json({ applied: true, live: true });
 }));
 
+// Estado da pausa - vive só em memória deste processo (como o runtime do
+// servidor); se o painel for reiniciado a meio de uma pausa temporizada,
+// o temporizador perde-se e a pausa fica indeterminada até se despausar
+// manualmente.
+let pauseState = { paused: false, until: null, timer: null };
+
+function clearPauseTimer() {
+  if (pauseState.timer) clearTimeout(pauseState.timer);
+  pauseState = { paused: false, until: null, timer: null };
+}
+
+router.get('/pause-state', (req, res) => {
+  res.json({ paused: pauseState.paused, until: pauseState.until });
+});
+
+// Ao vivo: pausa o jogo na próxima freeze time. Sem durationSeconds = fica
+// pausado indefinidamente até alguém clicar "Despausar". Com
+// durationSeconds = retoma automaticamente passado esse tempo.
+router.post('/pause', liveOnly(async (req, res) => {
+  const durationSeconds = req.body?.durationSeconds ? Number(req.body.durationSeconds) : null;
+  await rcon.pauseMatch();
+  clearPauseTimer();
+  pauseState.paused = true;
+
+  if (durationSeconds && durationSeconds > 0) {
+    pauseState.until = new Date(Date.now() + durationSeconds * 1000).toISOString();
+    pauseState.timer = setTimeout(async () => {
+      try { await rcon.unpauseMatch(); } catch (_) { /* servidor pode ja ter parado */ }
+      clearPauseTimer();
+    }, durationSeconds * 1000);
+  } else {
+    pauseState.until = null;
+  }
+
+  res.json({ applied: true, live: true, paused: true, until: pauseState.until });
+}));
+
+// Ao vivo: despausa manualmente (cancela qualquer temporizador pendente).
+router.post('/unpause', liveOnly(async (req, res) => {
+  await rcon.unpauseMatch();
+  clearPauseTimer();
+  res.json({ applied: true, live: true, paused: false });
+}));
+
 module.exports = router;

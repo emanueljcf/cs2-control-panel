@@ -65,10 +65,13 @@ function applyOverridesToTemplate(templateText, overrides, rawOverrides) {
 function generateMode(mode) {
   const templatePath = path.join(paths.TEMPLATES_DIR, `gamemode_${mode}.cfg.base`);
   const targetPath = path.join(paths.CS2_CFG_DIR, `gamemode_${mode}.cfg`);
-  const modeData = settingsStore.getMode(mode);
+  // Nunca le modeData.overrides diretamente: Competitivo/Casual/Deathmatch/
+  // Custom mantem-se sempre puros. A unica fonte de personalizacao e um
+  // preset guardado com nome, ativo para este modo (ver getEffectiveOverrides).
+  const { overrides, rawOverrides } = settingsStore.getEffectiveOverrides(mode);
 
   const templateText = fs.readFileSync(templatePath, 'utf8');
-  const body = applyOverridesToTemplate(templateText, modeData.overrides, modeData.rawOverrides);
+  const body = applyOverridesToTemplate(templateText, overrides, rawOverrides);
   const finalText = GENERATED_HEADER + body;
 
   return { targetPath, finalText };

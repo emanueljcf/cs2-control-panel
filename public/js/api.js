@@ -24,6 +24,7 @@ const api = {
   setup: (password) => apiFetch('/api/auth/setup', { method: 'POST', body: JSON.stringify({ password }) }),
   login: (password) => apiFetch('/api/auth/login', { method: 'POST', body: JSON.stringify({ password }) }),
   logout: () => apiFetch('/api/auth/logout', { method: 'POST' }),
+  changePassword: (currentPassword, newPassword) => apiFetch('/api/auth/change-password', { method: 'POST', body: JSON.stringify({ currentPassword, newPassword }) }),
 
   status: () => apiFetch('/api/status'),
   adopt: () => apiFetch('/api/status/adopt', { method: 'POST' }),
@@ -43,10 +44,26 @@ const api = {
 
   restartMatch: () => apiFetch('/api/match/restart', { method: 'POST' }),
   restartRound: () => apiFetch('/api/match/restart-round', { method: 'POST' }),
+  pauseMatch: (durationSeconds) => apiFetch('/api/match/pause', { method: 'POST', body: JSON.stringify({ durationSeconds }) }),
+  unpauseMatch: () => apiFetch('/api/match/unpause', { method: 'POST' }),
+  getPauseState: () => apiFetch('/api/match/pause-state'),
 
   getModeSettings: (mode) => apiFetch(`/api/settings/modes/${mode}`),
-  putModeSettings: (mode, changes) => apiFetch(`/api/settings/modes/${mode}`, { method: 'PUT', body: JSON.stringify({ changes }) }),
+  applyModeLive: (mode, changes) => apiFetch(`/api/settings/modes/${mode}/apply-live`, { method: 'POST', body: JSON.stringify({ changes }) }),
   applyAll: (dryRun = false) => apiFetch(`/api/settings/apply?dryRun=${dryRun}`, { method: 'POST' }),
 
   getConvars: () => apiFetch('/api/convars'),
+
+  getPlayers: () => apiFetch('/api/players'),
+  kickPlayer: (userid, reason) => apiFetch(`/api/players/${userid}/kick`, { method: 'POST', body: JSON.stringify({ reason }) }),
+  banPlayer: (userid, minutes, reason, name, address) => apiFetch(`/api/players/${userid}/ban`, { method: 'POST', body: JSON.stringify({ minutes, reason, name, address }) }),
+  getBans: () => apiFetch('/api/players/bans'),
+  unbanEntry: (id) => apiFetch(`/api/players/bans/${id}/unban`, { method: 'POST' }),
+  getBansRaw: () => apiFetch('/api/players/bans/raw'),
+  clearAllBans: () => apiFetch('/api/players/bans/clear-all', { method: 'POST' }),
+
+  getPresets: () => apiFetch('/api/presets'),
+  savePreset: (name, baseMode, overrides, rawOverrides) => apiFetch('/api/presets', { method: 'POST', body: JSON.stringify({ name, baseMode, overrides, rawOverrides }) }),
+  applyPreset: (id) => apiFetch(`/api/presets/${id}/apply`, { method: 'POST' }),
+  deletePreset: (id) => apiFetch(`/api/presets/${id}`, { method: 'DELETE' }),
 };

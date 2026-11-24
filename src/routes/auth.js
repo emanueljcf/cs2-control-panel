@@ -34,4 +34,21 @@ router.post('/logout', (req, res) => {
   req.session.destroy(() => res.json({ ok: true }));
 });
 
+// Exige sessão ativa + a password atual (sempre, mesmo já autenticado).
+router.post('/change-password', loginLimiter, async (req, res) => {
+  if (!req.session || !req.session.authenticated) {
+    return res.status(401).json({ error: 'not-authenticated' });
+  }
+  const { currentPassword, newPassword } = req.body || {};
+  if (!newPassword || newPassword.length < 8) {
+    return res.status(400).json({ error: 'password-too-short' });
+  }
+  try {
+    await auth.changePassword(currentPassword, newPassword);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(401).json({ error: err.message });
+  }
+});
+
 module.exports = router;

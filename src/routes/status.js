@@ -2,6 +2,7 @@ const express = require('express');
 const processManager = require('../core/processManager');
 const rcon = require('../core/rcon');
 const settingsStore = require('../core/settingsStore');
+const { getLanIp } = require('../core/network');
 
 const router = express.Router();
 
@@ -13,6 +14,8 @@ router.get('/', (req, res) => {
     activeMode: server.activeMode,
     activeMap: server.activeMap,
     rconAvailable: rcon.isConfigured(),
+    ip: getLanIp(),
+    port: server.port,
   });
 });
 

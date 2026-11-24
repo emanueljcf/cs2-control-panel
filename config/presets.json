@@ -1,0 +1,14 @@
+[
+  {
+    "id": "competitive-1795479343044",
+    "name": "LAN rotativo",
+    "baseMode": "competitive",
+    "overrides": {
+      "sv_vote_issue_pause_match_spec_only": 0,
+      "mp_endmatch_votenextmap": 1,
+      "mp_endmatch_votenextmap_keepcurrent": 1
+    },
+    "rawOverrides": {},
+    "createdAt": "2026-11-24T00:15:43.044Z"
+  }
+]

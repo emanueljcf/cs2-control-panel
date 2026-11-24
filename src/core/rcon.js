@@ -1,24 +1,10 @@
 // Wrapper fino sobre o protocolo Source RCON. Todas as ações aqui são "ao
 // vivo": nunca desconectam jogadores nem tocam no processo cs2.exe.
-const os = require('os');
 const Rcon = require('rcon-srcds').default || require('rcon-srcds');
 const settingsStore = require('./settingsStore');
+const { getLanIp } = require('./network');
 
 const TIMEOUT_MS = 3000;
-
-// O motor do CS2 liga o socket de RCON (TCP) ao IP da rede local da
-// máquina, não a 127.0.0.1 — confirmado nesta sessão (Test-NetConnection a
-// 127.0.0.1 falha, ao IP da LAN funciona). Por isso ligamos sempre ao IP
-// IPv4 ativo e não-interno, nunca a localhost.
-function lanHost() {
-  const nets = os.networkInterfaces();
-  for (const name of Object.keys(nets)) {
-    for (const net of nets[name]) {
-      if (net.family === 'IPv4' && !net.internal) return net.address;
-    }
-  }
-  return '127.0.0.1'; // fallback, não deverá ser necessário
-}
 
 function isConfigured() {
   const server = settingsStore.getServer();
@@ -30,7 +16,7 @@ async function withClient(fn) {
   if (!server.rcon_password) {
     throw new RconUnavailableError('rcon_password não está definido — ativa o RCON e reinicia uma vez.');
   }
-  const client = new Rcon({ host: lanHost(), port: server.port, timeout: TIMEOUT_MS });
+  const client = new Rcon({ host: getLanIp(), port: server.port, timeout: TIMEOUT_MS });
   try {
     await client.authenticate(server.rcon_password);
     return await fn(client);
@@ -67,12 +53,78 @@ async function changeMode(gameType, gameMode, currentMap) {
   return changeMap(currentMap);
 }
 
+async function pauseMatch() {
+  return command('mp_pause_match');
+}
+
+async function unpauseMatch() {
+  return command('mp_unpause_match');
+}
+
 async function quit() {
   return command('quit');
 }
 
 async function status() {
   return command('status');
+}
+
+// Linha de um jogador real, ex:
+//    2  01:23   45    0     active  12000 192.168.1.5:27005 'Nome do jogador'
+// Linha de um bot, ex:
+//    0      BOT    0    0     active      0 'Cavalry'
+const PLAYER_LINE = /^\s*(\d+)\s+(BOT|[\d:]+)\s+(-?\d+)\s+(-?\d+)\s+(\S+)\s+(\d+)\s+(?:(\S+:\d+)\s+)?'(.*)'\s*$/;
+
+function parsePlayers(statusText) {
+  const players = [];
+  for (const line of statusText.split('\n')) {
+    const m = line.match(PLAYER_LINE);
+    if (!m) continue;
+    const [, userid, time, ping, loss, state, rate, address, name] = m;
+    if (!name || state !== 'active') continue; // ignora ligações a meio do handshake (sem nome)
+    players.push({
+      userid,
+      isBot: time === 'BOT',
+      time: time === 'BOT' ? null : time,
+      ping: Number(ping),
+      loss: Number(loss),
+      state,
+      rate: Number(rate),
+      address: address || null,
+      name,
+    });
+  }
+  return players;
+}
+
+// Ao vivo: lista de jogadores ligados agora (via "status"), incluindo bots.
+async function getPlayers() {
+  const text = await status();
+  return parsePlayers(text);
+}
+
+// Ao vivo: kick imediato, sem banir. "reason" aparece ao jogador.
+async function kickPlayer(userid, reason = 'Removido pelo administrador') {
+  return command(`kickid ${userid} ${reason}`);
+}
+
+// Ao vivo: bane por N minutos (0 = permanente) e kicka de imediato; "writeid"
+// persiste a lista de banidos em disco (banned_user.cfg) para sobreviver a
+// um restart. Nota: em sv_lan 1, sem Steam real, a identidade do banido é o
+// "uniqueid" local da sessão — pode não sobreviver a uma nova ligação da
+// mesma pessoa se o motor atribuir um id diferente. É a limitação nativa do
+// modo LAN, não desta app.
+async function banPlayer(userid, minutes = 0, reason = 'Banido pelo administrador') {
+  await command(`banid ${minutes} ${userid} kick`);
+  return command('writeid');
+}
+
+// Melhor esforço: remove um id da lista de banidos em memória e persiste.
+// Só funciona se "id" corresponder exatamente ao que o motor guardou - não
+// há comando nativo para confirmar isso de antemão.
+async function unbanId(id) {
+  await command(`removeid ${id}`);
+  return command('writeid');
 }
 
 module.exports = {
@@ -83,7 +135,14 @@ module.exports = {
   restartMatch,
   restartRound,
   changeMode,
+  pauseMatch,
+  unpauseMatch,
   quit,
   status,
+  getPlayers,
+  kickPlayer,
+  banPlayer,
+  unbanId,
+  parsePlayers,
   RconUnavailableError,
 };

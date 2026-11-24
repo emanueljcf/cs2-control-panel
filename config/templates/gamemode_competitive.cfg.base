@@ -4,7 +4,7 @@ bot_chatter											normal
 bot_defer_to_human_goals							1
 bot_defer_to_human_items							1
 bot_difficulty										2
-bot_quota											0
+bot_quota											1
 bot_quota_mode										competitive
 cash_player_bomb_defused							300
 cash_player_bomb_planted							300
@@ -55,7 +55,7 @@ mp_respawn_immunitytime							-1 // disabling immunity in warmup too for 1v1 fig
 mp_halftime											1
 mp_match_can_clinch									1			// 0=No mercy rule, 1=team can clinch match win early if they win > 1/2 total rounds
 mp_maxmoney											16000
-mp_maxrounds										29
+mp_maxrounds										24
 //mp_molotovusedelay									0
 mp_playercashawards									1
 mp_roundtime										1.92
@@ -67,13 +67,8 @@ mp_teamcashawards									1
 mp_timelimit										0
 mp_technical_timeout_per_team						1
 mp_technical_timeout_duration_s						120
-mp_warmup_pausetimer								0
-mp_warmuptime										999999
-mp_warmuptime_all_players_connected					90
-mp_endwarmup_player_count							10
-mp_match_restart_delay								15
-mp_endmatch_votenextmap								0
-mp_autokick										0
+mp_warmuptime										120
+mp_warmuptime_all_players_connected					15
 mp_weapons_allow_zeus								5
 //spec_freeze_panel_extended_time						0
 spec_freeze_time									2.0
