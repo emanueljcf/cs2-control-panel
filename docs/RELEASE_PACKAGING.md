@@ -65,7 +65,7 @@ Alguém sem Claude Code e sem conhecimentos técnicos deve conseguir, a partir d
 
 ## Bloqueado / a retomar antes disto fazer sentido por completo
 
-- **Ronda de faca (MatchZy)**: instalação de MetaMod:Source 2.0 (build 1491, dev branch) + CounterStrikeSharp (via bundle MatchZy 0.9.3 "with-cssharp") causou um **access violation** no arranque do CS2 na instância de teste (ficheiros ainda guardados em `C:\Users\Cartel 90\Downloads\cs2-plugins`, e já copiados mas desativados em `C:\cs2server-test` — o `gameinfo.gi` foi revertido para a instância arrancar normalmente). Antes de incluir isto no instalador automático, é preciso encontrar uma combinação de versões estável.
+- **Ronda de faca (MatchZy)**: instalação de MetaMod:Source 2.0 (build 1491, dev branch) + CounterStrikeSharp (via bundle MatchZy 0.9.3 "with-cssharp") causou um **access violation** no arranque do CS2 na instância de teste (ficheiros ainda guardados localmente em `Downloads\cs2-plugins`, e já copiados mas desativados em `C:\cs2server-test` — o `gameinfo.gi` foi revertido para a instância arrancar normalmente). Antes de incluir isto no instalador automático, é preciso encontrar uma combinação de versões estável.
   - MetaMod usado: `https://github.com/alliedmodders/metamod-source/releases/download/2.0.0.1491/mmsource-2.0.0-git1491-windows.zip`
   - MatchZy usado: `https://github.com/shobhit-pathak/MatchZy/releases/download/0.9.3/MatchZy-0.9.3-with-cssharp-windows.zip`
   - MatchZy tem ronda de faca nativa e ativa por defeito (`matchzy_knife_enabled_default true`, `matchzy_autostart_mode 1`) — vale a pena manter como plugin de escolha quando a incompatibilidade for resolvida.
